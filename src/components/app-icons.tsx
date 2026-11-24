@@ -7,6 +7,7 @@ export type AppIconKey =
   | 'kpi'
   | 'calendar'
   | 'core'
+  | 'administration'
   | 'event'
   | 'praktikum'
   | 'enabler'
@@ -100,6 +101,24 @@ export function AppModuleIcon({ iconKey, index = 0 }: { iconKey: AppIconKey; ind
         <circle cx="17" cy="17" r="6" fill="#F59E0B" />
         <circle cx="31" cy="31" r="6" fill="#10B981" />
         <path d="M33 15 15 33" stroke="#7C3AED" strokeWidth="5" strokeLinecap="round" />
+      </svg>
+    ),
+    administration: (
+      <svg viewBox="0 0 48 48" className="h-11 w-11" fill="none">
+        <path
+          d="M8 14a4 4 0 0 1 4-4h9l3.5 4H36a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V14Z"
+          fill="#6366F1"
+        />
+        <rect x="13" y="18" width="22" height="16" rx="3" fill="#FFFFFF" fillOpacity="0.92" />
+        <path d="M17 23h14M17 28h9" stroke="#7C3AED" strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="34" cy="33" r="6.5" fill="#10B981" />
+        <path
+          d="m31.4 33 1.8 1.8 3.4-3.6"
+          stroke="#FFFFFF"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     ),
     event: (

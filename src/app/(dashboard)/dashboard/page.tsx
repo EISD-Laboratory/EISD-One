@@ -74,7 +74,7 @@ interface DashboardData {
 }
 
 const BUILTIN_PATHS: Record<string, string> = {
-  core: '/core',
+  core: '/finance',
   event: '/event',
   praktikum: '/praktikum',
   enabler: '/enabler',
@@ -186,7 +186,7 @@ export default function RoleDashboardPage() {
       ? {
           label: 'Saldo Kas Core',
           value: formatCompactRupiah(data.stats.cashBalance),
-          href: '/core',
+          href: '/finance',
           aurora: 'aurora-card-green',
           icon: Wallet,
           iconColor: 'text-emerald-600',
