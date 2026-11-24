@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface Role {
@@ -191,18 +192,15 @@ export default function RbacPage() {
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                   className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
                 />
-                <select
+                <GlassSelect
                   value={newUser.roleId}
-                  onChange={(e) => setNewUser({ ...newUser, roleId: e.target.value })}
-                  className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
-                >
-                  <option value="">-- Role --</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setNewUser({ ...newUser, roleId: v })}
+                  placeholder="-- Pilih Role --"
+                  options={[
+                    { value: '', label: '-- Tanpa Role --' },
+                    ...roles.map((r) => ({ value: r.id, label: r.name, hint: r.scope })),
+                  ]}
+                />
                 <button
                   type="submit"
                   className="rounded bg-slate-900 py-1.5 text-xs font-medium text-white sm:col-span-4"

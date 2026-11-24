@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Download } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface CalItem {
@@ -69,16 +70,16 @@ export default function CalendarPage() {
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 className="rounded border border-slate-300 px-3 py-1.5 text-sm"
               />
-              <select
+              <GlassSelect
                 value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="rounded border border-slate-300 px-3 py-1.5 text-sm"
-              >
-                <option value="MEETING">MEETING</option>
-                <option value="EVENT">EVENT</option>
-                <option value="PRAKTIKUM">PRAKTIKUM</option>
-                <option value="COMPETITION">COMPETITION</option>
-              </select>
+                onChange={(v) => setForm({ ...form, category: v })}
+                options={[
+                  { value: 'MEETING', label: 'MEETING' },
+                  { value: 'EVENT', label: 'EVENT' },
+                  { value: 'PRAKTIKUM', label: 'PRAKTIKUM' },
+                  { value: 'COMPETITION', label: 'COMPETITION' },
+                ]}
+              />
               <input
                 type="datetime-local"
                 required

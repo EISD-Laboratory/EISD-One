@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface CompetitionItem {
@@ -121,16 +122,16 @@ export default function CompetitionPage() {
                 onChange={(e) => setTeamName(e.target.value)}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
-              <select
+              <GlassSelect
                 value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="Kampus">Kampus</option>
-                <option value="Regional">Regional</option>
-                <option value="Nasional">Nasional</option>
-                <option value="Internasional">Internasional</option>
-              </select>
+                onChange={setLevel}
+                options={[
+                  { value: 'Kampus', label: 'Kampus' },
+                  { value: 'Regional', label: 'Regional' },
+                  { value: 'Nasional', label: 'Nasional' },
+                  { value: 'Internasional', label: 'Internasional' },
+                ]}
+              />
               <input
                 required
                 type="date"
@@ -199,17 +200,13 @@ export default function CompetitionPage() {
               </div>
               {canManage && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
+                  <GlassSelect
+                    size="sm"
+                    className="min-w-[140px]"
                     value={item.status}
-                    onChange={(e) => void handleUpdate(item.id, { status: e.target.value })}
-                    className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
-                  >
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => void handleUpdate(item.id, { status: v })}
+                    options={STATUSES.map((s) => ({ value: s, label: s }))}
+                  />
                   {!item.recordedToCash && item.registrationFee > 0 && (
                     <button
                       type="button"

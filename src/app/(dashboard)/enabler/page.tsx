@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Cake, CheckSquare, Trophy } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface Partner {
@@ -179,19 +180,16 @@ export default function EnablerModulePage() {
           <CardContent className="space-y-4 text-sm">
             {hasPermission('enabler.partner.manage') && (
               <form onSubmit={(e) => void proposeSotm(e)} className="space-y-2">
-                <select
-                  required
+                <GlassSelect
                   value={recForm.memberId}
-                  onChange={(e) => setRecForm({ ...recForm, memberId: e.target.value })}
-                  className="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm"
-                >
-                  <option value="">-- Pilih Pemenang dari Ranking KPI --</option>
-                  {data?.kpiRanking.map((r) => (
-                    <option key={r.memberId} value={r.memberId}>
-                      #{r.rank} {r.fullName} ({r.division}) — Skor {r.finalScore}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setRecForm({ ...recForm, memberId: v })}
+                  placeholder="-- Pilih Pemenang dari Ranking KPI --"
+                  options={(data?.kpiRanking ?? []).map((r) => ({
+                    value: r.memberId,
+                    label: `#${r.rank} ${r.fullName}`,
+                    hint: `${r.division} · Skor ${r.finalScore}`,
+                  }))}
+                />
                 <input
                   placeholder="Alasan override (WAJIB diisi jika bukan peringkat #1 KPI)"
                   value={recForm.overrideReason}
@@ -299,17 +297,13 @@ export default function EnablerModulePage() {
                 onChange={(e) => setPForm({ ...pForm, picContact: e.target.value })}
                 className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
               />
-              <select
+              <GlassSelect
                 value={pForm.stage}
-                onChange={(e) => setPForm({ ...pForm, stage: e.target.value })}
-                className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
-              >
-                {['PROSPECT', 'APPROACH', 'NEGOTIATION', 'DEAL', 'ACTIVE', 'COMPLETED'].map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setPForm({ ...pForm, stage: v })}
+                options={['PROSPECT', 'APPROACH', 'NEGOTIATION', 'DEAL', 'ACTIVE', 'COMPLETED'].map(
+                  (s) => ({ value: s, label: s }),
+                )}
+              />
               <input
                 placeholder="Checklist benefit (pisahkan koma)"
                 value={pForm.benefitText}

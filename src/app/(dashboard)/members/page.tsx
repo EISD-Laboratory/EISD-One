@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Download, Plus, Search, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface Division {
@@ -193,18 +194,15 @@ export default function MembersPage() {
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
               />
-              <select
+              <GlassSelect
                 value={form.divisionId}
-                onChange={(e) => setForm({ ...form, divisionId: e.target.value })}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
-              >
-                <option value="">-- Divisi --</option>
-                {divisions.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setForm({ ...form, divisionId: v })}
+                placeholder="-- Pilih Divisi --"
+                options={[
+                  { value: '', label: '-- Tanpa Divisi --' },
+                  ...divisions.map((d) => ({ value: d.id, label: d.name, hint: d.code })),
+                ]}
+              />
               <input
                 placeholder="Jabatan"
                 value={form.positionTitle}
@@ -237,34 +235,36 @@ export default function MembersPage() {
                 className="w-full rounded-lg border border-slate-300 py-1.5 pl-9 pr-3 text-sm"
               />
             </div>
-            <select
+            <GlassSelect
+              size="sm"
+              className="min-w-[155px]"
               value={status}
-              onChange={(e) => {
+              onChange={(v) => {
                 setPage(1);
-                setStatus(e.target.value);
+                setStatus(v);
               }}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
-            >
-              <option value="">Semua Status</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="LEAVE">LEAVE</option>
-              <option value="ALUMNI">ALUMNI</option>
-            </select>
-            <select
+              placeholder="Semua Status"
+              options={[
+                { value: '', label: 'Semua Status' },
+                { value: 'ACTIVE', label: 'ACTIVE' },
+                { value: 'LEAVE', label: 'LEAVE' },
+                { value: 'ALUMNI', label: 'ALUMNI' },
+              ]}
+            />
+            <GlassSelect
+              size="sm"
+              className="min-w-[180px]"
               value={divisionId}
-              onChange={(e) => {
+              onChange={(v) => {
                 setPage(1);
-                setDivisionId(e.target.value);
+                setDivisionId(v);
               }}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
-            >
-              <option value="">Semua Divisi</option>
-              {divisions.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
+              placeholder="Semua Divisi"
+              options={[
+                { value: '', label: 'Semua Divisi' },
+                ...divisions.map((d) => ({ value: d.id, label: d.name })),
+              ]}
+            />
           </div>
         </CardHeader>
         <CardContent>

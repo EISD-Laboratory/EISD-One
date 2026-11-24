@@ -3,6 +3,7 @@
 import { use, useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface CustomField {
@@ -129,22 +130,13 @@ export default function CustomModuleRuntimePage({ params }: { params: Promise<{ 
                 const onChange = (val: string) => setValues((prev) => ({ ...prev, [f.key]: val }));
                 if (f.type === 'select') {
                   return (
-                    <select
+                    <GlassSelect
                       key={f.key}
-                      required={f.required}
                       value={v}
-                      onChange={(e) => onChange(e.target.value)}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                    >
-                      <option value="">
-                        -- {f.label} {f.required ? '*' : ''} --
-                      </option>
-                      {(f.options ?? []).map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={onChange}
+                      placeholder={`-- ${f.label}${f.required ? ' *' : ''} --`}
+                      options={(f.options ?? []).map((opt) => ({ value: opt, label: opt }))}
+                    />
                   );
                 }
                 if (f.type === 'textarea') {

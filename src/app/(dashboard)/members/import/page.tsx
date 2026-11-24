@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Download, RotateCcw, Upload } from 'lucide-react';
 import { apiFetch } from '@/components/client-api';
+import { FieldGroup, GlassFileDropzone, GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface PreviewRes {
@@ -49,7 +50,10 @@ export default function MembersImportPage() {
 
   async function handlePreview(e: FormEvent) {
     e.preventDefault();
-    if (!file) return;
+    if (!file) {
+      setErr('Silakan pilih file Excel (.xlsx) atau CSV (.csv) terlebih dahulu.');
+      return;
+    }
     setErr(null);
     setMsg(null);
     try {
@@ -82,6 +86,7 @@ export default function MembersImportPage() {
         `Import selesai: ${res.successCount} berhasil, ${res.skippedCount} dilewati, ${res.failedCount} gagal.`,
       );
       setPreview(null);
+      setFile(null);
       await loadBatches();
     } catch (e2: unknown) {
       setErr(e2 instanceof Error ? e2.message : 'Gagal memproses import.');
@@ -100,37 +105,39 @@ export default function MembersImportPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Import Excel / CSV Anggota</h1>
-          <p className="text-sm text-slate-500">
-            Dry-run validasi, laporan error per baris, dan rollback per batch.
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Import Excel / CSV Anggota
+          </h1>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Dry-run validasi, laporan error per baris, dan rollback aman per batch.
           </p>
         </div>
         <div className="flex gap-2">
           <a
             href="/api/members/export?template=true&format=xlsx"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium"
+            className="glass-tile inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-violet-800 transition hover:bg-white/95"
           >
-            <Download className="h-3.5 w-3.5" /> Template XLSX
+            <Download className="h-3.5 w-3.5 text-emerald-600" /> Template XLSX
           </a>
           <a
             href="/api/members/export?template=true&format=csv"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium"
+            className="glass-tile inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-white/95"
           >
-            <Download className="h-3.5 w-3.5" /> Template CSV
+            <Download className="h-3.5 w-3.5 text-violet-600" /> Template CSV
           </a>
         </div>
       </div>
 
       {err && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-2xl border border-rose-200/80 bg-rose-50/80 px-4 py-2.5 text-sm text-rose-700 backdrop-blur-sm">
           {err}
         </div>
       )}
       {msg && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-800 backdrop-blur-sm">
           {msg}
         </div>
       )}
@@ -140,29 +147,43 @@ export default function MembersImportPage() {
           <CardTitle>1. Upload & Dry-Run</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={(e) => void handlePreview(e)} className="flex flex-wrap items-end gap-3">
-            <input
-              type="file"
-              accept=".xlsx,.csv"
-              required
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
-            />
-            <select
-              value={strategy}
-              onChange={(e) => setStrategy(e.target.value as 'SKIP' | 'OVERWRITE' | 'MERGE')}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="SKIP">SKIP duplikat</option>
-              <option value="OVERWRITE">OVERWRITE duplikat</option>
-              <option value="MERGE">MERGE duplikat</option>
-            </select>
-            <button
-              type="submit"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-            >
-              <Upload className="h-4 w-4" /> Preview & Validasi
-            </button>
+          <form onSubmit={(e) => void handlePreview(e)} className="grid gap-4 md:grid-cols-12">
+            <FieldGroup label="File Data Anggota (.xlsx / .csv)" required className="md:col-span-6">
+              <GlassFileDropzone
+                file={file}
+                onFileSelect={setFile}
+                accept=".xlsx,.csv"
+                hint="Seret file Excel/CSV ke sini atau klik untuk memilih"
+              />
+            </FieldGroup>
+            <FieldGroup label="Strategi Jika NIM Duplikat" className="md:col-span-3">
+              <GlassSelect
+                value={strategy}
+                onChange={(v) => setStrategy(v as 'SKIP' | 'OVERWRITE' | 'MERGE')}
+                options={[
+                  { value: 'SKIP', label: 'SKIP duplikat', hint: 'Lewati data yang sudah ada' },
+                  {
+                    value: 'OVERWRITE',
+                    label: 'OVERWRITE duplikat',
+                    hint: 'Timpa seluruh kolom lama',
+                  },
+                  {
+                    value: 'MERGE',
+                    label: 'MERGE duplikat',
+                    hint: 'Isi hanya kolom yang kosong',
+                  },
+                ]}
+              />
+            </FieldGroup>
+            <div className="flex items-end md:col-span-3">
+              <button
+                type="submit"
+                disabled={!file}
+                className="btn-brand inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" /> Preview & Validasi
+              </button>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -173,7 +194,7 @@ export default function MembersImportPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <CardTitle>2. Hasil Dry-Run ({preview.fileName})</CardTitle>
               <div className="flex gap-2">
-                <Badge variant="success">Valid: {preview.validCount}</Badge>
+                <Badge variant="success">● Valid: {preview.validCount}</Badge>
                 <Badge variant="secondary">Skip: {preview.skippedCount}</Badge>
                 <Badge variant={preview.failedCount > 0 ? 'danger' : 'secondary'}>
                   Error: {preview.failedCount}
@@ -182,30 +203,23 @@ export default function MembersImportPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3">
               {preview.columns.map((c) => (
-                <div key={c.key}>
-                  <label className="block text-xs text-slate-600">
-                    {c.label}
-                    {c.required ? ' *' : ''}
-                  </label>
-                  <select
+                <FieldGroup key={c.key} label={c.label} required={c.required}>
+                  <GlassSelect
                     value={mapping[c.key] ?? ''}
-                    onChange={(e) => setMapping({ ...mapping, [c.key]: e.target.value })}
-                    className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                  >
-                    <option value="">-- Abaikan --</option>
-                    {preview.headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    onChange={(v) => setMapping({ ...mapping, [c.key]: v })}
+                    placeholder="-- Abaikan --"
+                    options={[
+                      { value: '', label: '-- Abaikan --' },
+                      ...preview.headers.map((h) => ({ value: h, label: h })),
+                    ]}
+                  />
+                </FieldGroup>
               ))}
             </div>
             {preview.errors.length > 0 && (
-              <div className="max-h-40 overflow-auto rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+              <div className="max-h-40 overflow-auto rounded-2xl border border-rose-200/80 bg-rose-50/80 p-3 text-xs text-rose-800">
                 {preview.errors.map((e) => (
                   <p key={e.rowNumber}>
                     Baris {e.rowNumber}: {e.errors.join('; ')}
@@ -216,7 +230,7 @@ export default function MembersImportPage() {
             <button
               type="button"
               onClick={() => void handleCommit()}
-              className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white"
+              className="btn-brand rounded-xl px-5 py-2.5 text-sm font-semibold"
             >
               Konfirmasi & Simpan ke Database
             </button>
@@ -228,14 +242,17 @@ export default function MembersImportPage() {
         <CardHeader>
           <CardTitle>Riwayat Batch & Rollback</CardTitle>
         </CardHeader>
-        <CardContent className="divide-y divide-slate-100 text-sm">
+        <CardContent className="divide-y divide-white/60 text-sm">
           {batches.map((b) => (
-            <div key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+            <div key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
               <div>
-                <p className="font-medium text-slate-900">
-                  {b.fileName} <Badge variant="secondary">{b.status}</Badge>
+                <p className="flex items-center gap-2 font-medium text-slate-900">
+                  <span>{b.fileName}</span>
+                  <Badge variant={b.status === 'COMPLETED' ? 'success' : 'purple'}>
+                    {b.status}
+                  </Badge>
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="mt-0.5 text-xs text-slate-500">
                   Total {b.totalRows} · Sukses {b.successCount} · Skip {b.skippedCount} · Gagal{' '}
                   {b.failedCount}
                 </p>
@@ -244,7 +261,7 @@ export default function MembersImportPage() {
                 <button
                   type="button"
                   onClick={() => void handleRollback(b.id)}
-                  className="inline-flex items-center gap-1 rounded border border-rose-300 px-2.5 py-1 text-xs text-rose-700 hover:bg-rose-50"
+                  className="inline-flex items-center gap-1 rounded-xl border border-rose-200/80 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 backdrop-blur-sm transition hover:bg-rose-100"
                 >
                   <RotateCcw className="h-3 w-3" /> Rollback
                 </button>

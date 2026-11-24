@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Award, CheckCircle2, Download, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface EventParticipant {
@@ -212,17 +213,16 @@ export default function EventModulePage() {
                   {ev.status}
                 </Badge>
                 {hasPermission('event.event.manage') && (
-                  <select
+                  <GlassSelect
+                    size="sm"
+                    className="min-w-[140px]"
                     value={ev.status}
-                    onChange={(e) => void changeStatus(ev.id, e.target.value)}
-                    className="rounded border border-slate-300 px-2 py-1 text-xs"
-                  >
-                    {['IDEA', 'PROPOSAL', 'APPROVED', 'ONGOING', 'COMPLETED'].map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => void changeStatus(ev.id, v)}
+                    options={['IDEA', 'PROPOSAL', 'APPROVED', 'ONGOING', 'COMPLETED'].map((s) => ({
+                      value: s,
+                      label: s,
+                    }))}
+                  />
                 )}
                 {ev.isPublicOpen && (
                   <Link
@@ -247,30 +247,29 @@ export default function EventModulePage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  setCommForm({ ...commForm, eventId: ev.id });
+                  if (commForm.eventId !== ev.id || !commForm.memberId) return;
                   void addCommittee(e);
                 }}
-                className="flex flex-wrap gap-2"
+                className="flex flex-wrap items-center gap-2"
               >
-                <select
-                  required
+                <GlassSelect
+                  size="sm"
+                  className="min-w-[240px]"
                   value={commForm.eventId === ev.id ? commForm.memberId : ''}
-                  onChange={(e) =>
+                  onChange={(v) =>
                     setCommForm({
                       eventId: ev.id,
-                      memberId: e.target.value,
+                      memberId: v,
                       position: commForm.position,
                     })
                   }
-                  className="rounded border border-slate-300 px-2.5 py-1 text-xs"
-                >
-                  <option value="">-- Tambah Panitia (Anggota EISD) --</option>
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.fullName} ({m.nim})
-                    </option>
-                  ))}
-                </select>
+                  placeholder="-- Tambah Panitia (Anggota EISD) --"
+                  options={members.map((m) => ({
+                    value: m.id,
+                    label: m.fullName,
+                    hint: m.nim,
+                  }))}
+                />
                 <input
                   placeholder="Jabatan Panitia"
                   value={commForm.position}

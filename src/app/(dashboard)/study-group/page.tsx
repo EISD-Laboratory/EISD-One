@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface StudyGroupItem {
@@ -169,19 +170,16 @@ export default function StudyGroupPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={(e) => void handleAddSession(e)} className="space-y-3">
-                <select
-                  required
+                <GlassSelect
                   value={selectedGroupId}
-                  onChange={(e) => setSelectedGroupId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                >
-                  <option value="">-- Pilih Kelas --</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.code} — {g.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSelectedGroupId}
+                  placeholder="-- Pilih Kelas Study Group --"
+                  options={groups.map((g) => ({
+                    value: g.id,
+                    label: `${g.code} — ${g.name}`,
+                    hint: g.topic,
+                  }))}
+                />
                 <div className="grid grid-cols-3 gap-3">
                   <input
                     type="number"

@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface ResearchItem {
@@ -109,15 +110,15 @@ export default function ResearchPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2"
               />
-              <select
+              <GlassSelect
                 value={type}
-                onChange={(e) => setType(e.target.value as ResearchItem['type'])}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="RESEARCH">Riset</option>
-                <option value="PUBLICATION">Publikasi / HAKI</option>
-                <option value="COMMUNITY_SERVICE">Pengabdian Masyarakat</option>
-              </select>
+                onChange={(v) => setType(v as ResearchItem['type'])}
+                options={[
+                  { value: 'RESEARCH', label: 'Riset' },
+                  { value: 'PUBLICATION', label: 'Publikasi / HAKI' },
+                  { value: 'COMMUNITY_SERVICE', label: 'Pengabdian Masyarakat' },
+                ]}
+              />
               <input
                 type="number"
                 required
@@ -182,19 +183,13 @@ export default function ResearchPage() {
                 </p>
               </div>
               {canManage ? (
-                <select
+                <GlassSelect
+                  size="sm"
+                  className="min-w-[140px]"
                   value={item.status}
-                  onChange={(e) =>
-                    void handleStatus(item.id, e.target.value as ResearchItem['status'])
-                  }
-                  className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs"
-                >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => void handleStatus(item.id, v as ResearchItem['status'])}
+                  options={STATUSES.map((s) => ({ value: s, label: s }))}
+                />
               ) : (
                 <Badge variant="secondary">{item.status}</Badge>
               )}

@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface FieldDraft {
@@ -181,19 +182,18 @@ export default function CustomModulesBuilderPage() {
                     onChange={(e) => updateField(idx, { key: e.target.value })}
                     className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs"
                   />
-                  <select
+                  <GlassSelect
+                    size="sm"
                     value={f.type}
-                    onChange={(e) =>
-                      updateField(idx, { type: e.target.value as FieldDraft['type'] })
-                    }
-                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs"
-                  >
-                    <option value="text">Teks Singkat</option>
-                    <option value="number">Angka</option>
-                    <option value="date">Tanggal</option>
-                    <option value="select">Dropdown Pilihan</option>
-                    <option value="textarea">Catatan Panjang</option>
-                  </select>
+                    onChange={(v) => updateField(idx, { type: v as FieldDraft['type'] })}
+                    options={[
+                      { value: 'text', label: 'Teks Singkat' },
+                      { value: 'number', label: 'Angka' },
+                      { value: 'date', label: 'Tanggal' },
+                      { value: 'select', label: 'Dropdown Pilihan' },
+                      { value: 'textarea', label: 'Catatan Panjang' },
+                    ]}
+                  />
                   {f.type === 'select' ? (
                     <input
                       required

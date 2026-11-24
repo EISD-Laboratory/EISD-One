@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Calculator, Copy, Download } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface KpiIndicator {
@@ -102,6 +103,7 @@ export default function KpiPage() {
 
   async function submitManual(e: FormEvent) {
     e.preventDefault();
+    if (!manual.indicatorId || !manual.memberId) return;
     await apiFetch('/api/kpi', {
       method: 'POST',
       body: JSON.stringify({ action: 'submit_manual', frameworkId: fwId, year, month, ...manual }),
@@ -128,18 +130,19 @@ export default function KpiPage() {
             Bobot 100%, normalisasi 0–100, clone versi baru tanpa deploy ulang.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <select
+        <div className="flex flex-wrap items-center gap-2">
+          <GlassSelect
+            size="sm"
+            className="min-w-[240px]"
             value={fwId}
-            onChange={(e) => setFwId(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
-          >
-            {frameworks.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name} (v{f.version} · {f.status})
-              </option>
-            ))}
-          </select>
+            onChange={setFwId}
+            placeholder="Pilih Framework KPI"
+            options={frameworks.map((f) => ({
+              value: f.id,
+              label: `${f.name} (v${f.version})`,
+              hint: f.status,
+            }))}
+          />
           <input
             type="number"
             value={year}
@@ -224,44 +227,39 @@ export default function KpiPage() {
             <CardTitle>Input Nilai Manual (Kadiv)</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={(e) => void submitManual(e)} className="grid gap-2 md:grid-cols-4">
-              <select
-                required
+            <form onSubmit={(e) => void submitManual(e)} className="grid gap-3 md:grid-cols-4">
+              <GlassSelect
                 value={manual.indicatorId}
-                onChange={(e) => setManual({ ...manual, indicatorId: e.target.value })}
-                className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
-              >
-                <option value="">-- Indikator --</option>
-                {manualInds.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                required
+                onChange={(v) => setManual({ ...manual, indicatorId: v })}
+                placeholder="-- Pilih Indikator --"
+                options={manualInds.map((i) => ({
+                  value: i.id,
+                  label: i.name,
+                  hint: `Skala ${i.minScale}–${i.maxScale}`,
+                }))}
+              />
+              <GlassSelect
                 value={manual.memberId}
-                onChange={(e) => setManual({ ...manual, memberId: e.target.value })}
-                className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
-              >
-                <option value="">-- Anggota --</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.fullName} ({m.nim})
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setManual({ ...manual, memberId: v })}
+                placeholder="-- Pilih Anggota --"
+                options={members.map((m) => ({
+                  value: m.id,
+                  label: m.fullName,
+                  hint: m.nim,
+                }))}
+              />
               <input
                 type="number"
                 step="0.1"
                 required
                 value={manual.rawValue}
                 onChange={(e) => setManual({ ...manual, rawValue: e.target.value })}
-                className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
+                className="rounded-xl px-3 py-2 text-sm"
               />
               <button
                 type="submit"
-                className="rounded bg-slate-900 py-1.5 text-xs font-medium text-white"
+                disabled={!manual.indicatorId || !manual.memberId}
+                className="btn-brand rounded-xl py-2 text-xs font-semibold disabled:opacity-50"
               >
                 Ajukan Nilai
               </button>

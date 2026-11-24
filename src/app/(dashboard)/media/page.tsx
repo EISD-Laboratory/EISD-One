@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface MediaItem {
@@ -111,16 +112,16 @@ export default function MediaPage() {
                 onChange={(e) => setRequesterDivision(e.target.value)}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
-              <select
+              <GlassSelect
                 value={channel}
-                onChange={(e) => setChannel(e.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              >
-                <option value="Instagram">Instagram</option>
-                <option value="YouTube">YouTube</option>
-                <option value="LinkedIn">LinkedIn</option>
-                <option value="Website">Website / Poster Cetak</option>
-              </select>
+                onChange={setChannel}
+                options={[
+                  { value: 'Instagram', label: 'Instagram' },
+                  { value: 'YouTube', label: 'YouTube' },
+                  { value: 'LinkedIn', label: 'LinkedIn' },
+                  { value: 'Website', label: 'Website / Poster Cetak' },
+                ]}
+              />
               <input
                 placeholder="Nama PIC Media"
                 value={picName}
@@ -192,19 +193,13 @@ export default function MediaPage() {
               </div>
               <div className="flex items-center gap-2">
                 {canManage ? (
-                  <select
+                  <GlassSelect
+                    size="sm"
+                    className="min-w-[140px]"
                     value={item.status}
-                    onChange={(e) =>
-                      void handleStatus(item.id, e.target.value as MediaItem['status'])
-                    }
-                    className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium"
-                  >
-                    {STATUS_OPTIONS.map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => void handleStatus(item.id, v as MediaItem['status'])}
+                    options={STATUS_OPTIONS.map((st) => ({ value: st, label: st }))}
+                  />
                 ) : (
                   <Badge variant={item.status === 'PUBLISHED' ? 'success' : 'secondary'}>
                     {item.status}

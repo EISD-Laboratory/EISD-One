@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Download } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
+import { GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface CoreOverview {
@@ -182,14 +183,14 @@ export default function CoreModulePage() {
           <CardContent className="space-y-4">
             {hasPermission('core.finance.manage') && (
               <form onSubmit={(e) => void addTx(e)} className="grid gap-2 md:grid-cols-5">
-                <select
+                <GlassSelect
                   value={txForm.type}
-                  onChange={(e) => setTxForm({ ...txForm, type: e.target.value })}
-                  className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
-                >
-                  <option value="INCOME">Pemasukan</option>
-                  <option value="EXPENSE">Pengeluaran</option>
-                </select>
+                  onChange={(v) => setTxForm({ ...txForm, type: v })}
+                  options={[
+                    { value: 'INCOME', label: 'Pemasukan' },
+                    { value: 'EXPENSE', label: 'Pengeluaran' },
+                  ]}
+                />
                 <input
                   required
                   placeholder="Kategori"
@@ -321,14 +322,14 @@ export default function CoreModulePage() {
           <CardContent className="space-y-4">
             {hasPermission('core.record.manage') && (
               <form onSubmit={(e) => void addRecord(e)} className="grid gap-2 md:grid-cols-4">
-                <select
+                <GlassSelect
                   value={recForm.recordType}
-                  onChange={(e) => setRecForm({ ...recForm, recordType: e.target.value })}
-                  className="rounded border border-slate-300 px-2.5 py-1.5 text-sm"
-                >
-                  <option value="MEETING">Rapat / Notulen</option>
-                  <option value="LETTER">Surat Resmi</option>
-                </select>
+                  onChange={(v) => setRecForm({ ...recForm, recordType: v })}
+                  options={[
+                    { value: 'MEETING', label: 'Rapat / Notulen' },
+                    { value: 'LETTER', label: 'Surat Resmi' },
+                  ]}
+                />
                 <input
                   placeholder="No. Surat (opsional)"
                   value={recForm.referenceNo}
