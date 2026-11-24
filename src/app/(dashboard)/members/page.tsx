@@ -18,7 +18,7 @@ import {
 import { useBreadcrumb } from '@/components/app-shell';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
-import { FieldGroup, GlassSelect } from '@/components/glass-inputs';
+import { FieldGroup, GlassConfirmDialog, GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface Division {
@@ -76,6 +76,8 @@ export default function MembersPage() {
     positionTitle: 'Anggota',
   });
   const [error, setError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     const qs = new URLSearchParams({ page: String(page), limit: '20' });
@@ -132,10 +134,18 @@ export default function MembersPage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Hapus anggota ini (soft delete)?')) return;
-    await apiFetch(`/api/members/${id}`, { method: 'DELETE' });
-    await load();
+  async function confirmDeleteMember() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await apiFetch(`/api/members/${deleteTarget.id}`, { method: 'DELETE' });
+      setDeleteTarget(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menghapus anggota.');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   function resetSidebarFilters() {
@@ -547,7 +557,7 @@ export default function MembersPage() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                void handleDelete(m.id);
+                                setDeleteTarget(m);
                               }}
                               className="rounded-lg p-1.5 text-rose-600 hover:bg-rose-50"
                               title="Hapus anggota"
@@ -590,6 +600,17 @@ export default function MembersPage() {
           </CardContent>
         </Card>
       </div>
+
+      <GlassConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Hapus Anggota?"
+        itemLabel={deleteTarget ? `${deleteTarget.fullName} (${deleteTarget.nim})` : undefined}
+        description="Anggota ini akan dinonaktifkan dari daftar aktif (soft delete) dan perubahan akan tercatat otomatis pada Audit Log."
+        confirmLabel="Ya, Hapus Anggota"
+        loading={deleting}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDeleteMember()}
+      />
     </div>
   );
 }

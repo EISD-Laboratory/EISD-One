@@ -4,7 +4,12 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Download, RotateCcw, Upload } from 'lucide-react';
 import { apiFetch } from '@/components/client-api';
-import { FieldGroup, GlassFileDropzone, GlassSelect } from '@/components/glass-inputs';
+import {
+  FieldGroup,
+  GlassConfirmDialog,
+  GlassFileDropzone,
+  GlassSelect,
+} from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface PreviewRes {
@@ -39,6 +44,8 @@ export default function MembersImportPage() {
   const [batches, setBatches] = useState<BatchItem[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [rollbackTarget, setRollbackTarget] = useState<BatchItem | null>(null);
+  const [rollingBack, setRollingBack] = useState(false);
 
   const loadBatches = useCallback(async () => {
     const res = await apiFetch<{ items: BatchItem[] }>('/api/members/import');
@@ -94,15 +101,22 @@ export default function MembersImportPage() {
     }
   }
 
-  async function handleRollback(batchId: string) {
-    if (!confirm('Rollback batch ini? Data baru akan di-soft-delete dan data lama dipulihkan.'))
-      return;
-    const res = await apiFetch<{ rolledBackCount: number }>('/api/members/import', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'rollback', batchId }),
-    });
-    setMsg(`Rollback selesai (${res.rolledBackCount} baris dipulihkan).`);
-    await loadBatches();
+  async function confirmRollback() {
+    if (!rollbackTarget) return;
+    setRollingBack(true);
+    try {
+      const res = await apiFetch<{ rolledBackCount: number }>('/api/members/import', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'rollback', batchId: rollbackTarget.id }),
+      });
+      setMsg(`Rollback selesai (${res.rolledBackCount} baris dipulihkan).`);
+      setRollbackTarget(null);
+      await loadBatches();
+    } catch (e2: unknown) {
+      setErr(e2 instanceof Error ? e2.message : 'Gagal rollback batch.');
+    } finally {
+      setRollingBack(false);
+    }
   }
 
   return (
@@ -267,7 +281,7 @@ export default function MembersImportPage() {
               {b.status === 'COMPLETED' && (
                 <button
                   type="button"
-                  onClick={() => void handleRollback(b.id)}
+                  onClick={() => setRollbackTarget(b)}
                   className="inline-flex items-center gap-1 rounded-xl border border-rose-200/80 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 backdrop-blur-sm transition hover:bg-rose-100"
                 >
                   <RotateCcw className="h-3 w-3" /> Rollback
@@ -277,6 +291,17 @@ export default function MembersImportPage() {
           ))}
         </CardContent>
       </Card>
+
+      <GlassConfirmDialog
+        open={Boolean(rollbackTarget)}
+        title="Rollback Batch Import?"
+        itemLabel={rollbackTarget?.fileName}
+        description="Data baru dari batch ini akan di-soft-delete dan data anggota lama yang sempat diubah akan dipulihkan ke kondisi sebelumnya."
+        confirmLabel="Ya, Rollback"
+        loading={rollingBack}
+        onCancel={() => setRollbackTarget(null)}
+        onConfirm={() => void confirmRollback()}
+      />
     </div>
   );
 }

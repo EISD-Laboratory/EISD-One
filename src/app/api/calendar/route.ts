@@ -12,6 +12,7 @@ const createCalSchema = z.object({
   category: z.nativeEnum(CalendarCategory).default(CalendarCategory.MEETING),
   startAt: z.string(),
   endAt: z.string(),
+  allDay: z.boolean().optional(),
   location: z.string().optional(),
   description: z.string().optional(),
 });
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
           : {}),
       },
       orderBy: { startAt: 'asc' },
-      take: 200,
+      take: 500,
     });
 
     if (req.nextUrl.searchParams.get('format') === 'ics') {
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
         category: data.category,
         startAt: new Date(data.startAt),
         endAt: new Date(data.endAt),
+        allDay: Boolean(data.allDay),
         location: data.location || null,
         description: data.description || null,
         divisionId: !user.isSuperAdmin && user.divisionIds.length > 0 ? user.divisionIds[0] : null,

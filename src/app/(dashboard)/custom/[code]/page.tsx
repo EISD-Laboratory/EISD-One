@@ -3,7 +3,7 @@
 import { use, useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
-import { GlassSelect } from '@/components/glass-inputs';
+import { GlassConfirmDialog, GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 interface CustomField {
@@ -38,6 +38,8 @@ export default function CustomModuleRuntimePage({ params }: { params: Promise<{ 
   const [title, setTitle] = useState('');
   const [values, setValues] = useState<Record<string, string>>({});
   const [err, setErr] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     setErr(null);
@@ -65,9 +67,16 @@ export default function CustomModuleRuntimePage({ params }: { params: Promise<{ 
     }
   }
 
-  async function handleDelete(id: string) {
-    await apiFetch(`/api/custom-modules/${code}?id=${id}`, { method: 'DELETE' });
-    await load();
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await apiFetch(`/api/custom-modules/${code}?id=${deleteTarget.id}`, { method: 'DELETE' });
+      setDeleteTarget(null);
+      await load();
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (err && !mod) {
@@ -207,7 +216,7 @@ export default function CustomModuleRuntimePage({ params }: { params: Promise<{ 
                     <td className="py-2 text-right">
                       <button
                         type="button"
-                        onClick={() => void handleDelete(rec.id)}
+                        onClick={() => setDeleteTarget({ id: rec.id, title: rec.title })}
                         className="text-xs text-rose-600 hover:underline"
                       >
                         Hapus
@@ -220,6 +229,17 @@ export default function CustomModuleRuntimePage({ params }: { params: Promise<{ 
           </table>
         </CardContent>
       </Card>
+
+      <GlassConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={`Hapus Data ${mod.name}?`}
+        itemLabel={deleteTarget?.title}
+        description="Data yang dihapus akan dipindahkan ke arsip (soft delete) dan tercatat di Audit Log."
+        confirmLabel="Ya, Hapus Data"
+        loading={deleting}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDelete()}
+      />
     </div>
   );
 }

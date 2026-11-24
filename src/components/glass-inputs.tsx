@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown, FileSpreadsheet, Search, UploadCloud, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  FileSpreadsheet,
+  Search,
+  Trash2,
+  UploadCloud,
+  X,
+} from 'lucide-react';
 import { cn } from './ui';
 
 export function FieldGroup({
@@ -325,5 +334,118 @@ export function GlassFileDropzone({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Modal peringatan konfirmasi bergaya glassmorphism di tengah layar (pengganti confirm() bawaan browser).
+ */
+export function GlassConfirmDialog({
+  open,
+  title,
+  description,
+  itemLabel,
+  confirmLabel = 'Ya, Hapus',
+  cancelLabel = 'Batal',
+  variant = 'danger',
+  loading = false,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  description: string;
+  itemLabel?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'primary';
+  loading?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape' && !loading) onCancel();
+    }
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [open, loading, onCancel]);
+
+  if (!open || typeof document === 'undefined') return null;
+
+  const isDanger = variant === 'danger';
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/35 p-4 backdrop-blur-md"
+      onClick={() => {
+        if (!loading) onCancel();
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="glass-panel relative w-full max-w-md overflow-hidden rounded-3xl bg-white/80 shadow-[0_28px_64px_-16px_rgba(109,40,217,0.38)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className={cn(
+            'h-1.5 w-full',
+            isDanger
+              ? 'bg-gradient-to-r from-rose-500 via-fuchsia-500 to-violet-600'
+              : 'bg-brand-gradient',
+          )}
+        />
+
+        <div className="p-6 text-center">
+          <div
+            className={cn(
+              'mx-auto flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm ring-4',
+              isDanger
+                ? 'bg-gradient-to-br from-rose-500 to-violet-600 text-white ring-rose-100/80'
+                : 'bg-brand-gradient text-white ring-violet-100/80',
+            )}
+          >
+            {isDanger ? <Trash2 className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}
+          </div>
+
+          <h3 className="mt-4 text-lg font-bold tracking-tight text-slate-900">{title}</h3>
+
+          {itemLabel && (
+            <div className="glass-tile mx-auto mt-2.5 inline-block max-w-full rounded-xl px-3.5 py-1.5 text-xs font-semibold text-violet-900">
+              <span className="block truncate">{itemLabel}</span>
+            </div>
+          )}
+
+          <p className="mt-3 text-xs leading-relaxed text-slate-600">{description}</p>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={onCancel}
+              className="glass-tile rounded-xl py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-white/95 disabled:opacity-50"
+            >
+              {cancelLabel}
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={onConfirm}
+              className={cn(
+                'rounded-xl py-2.5 text-xs font-semibold text-white shadow-lg transition hover:brightness-105 disabled:opacity-50',
+                isDanger
+                  ? 'bg-gradient-to-r from-rose-500 via-pink-600 to-violet-600 shadow-rose-500/25'
+                  : 'btn-brand',
+              )}
+            >
+              {loading ? 'Memproses...' : confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
