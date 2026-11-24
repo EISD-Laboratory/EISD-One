@@ -31,8 +31,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="aurora-hero flex min-h-screen items-center justify-center bg-[#f6f7fb] px-4 py-10">
-      <Card className="relative w-full max-w-md overflow-hidden border-slate-200/80 shadow-[0_20px_50px_-24px_rgba(109,40,217,0.28)]">
+    <main className="aurora-hero relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
+      <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-emerald-400/25 blur-3xl" />
+      <div className="pointer-events-none absolute -right-24 -bottom-24 h-96 w-96 rounded-full bg-violet-500/25 blur-3xl" />
+      <Card className="relative w-full max-w-md overflow-hidden">
         <div className="aurora-card-blend h-2 w-full bg-brand-gradient" />
         <CardHeader className="aurora-card-purple pb-4">
           <div className="flex items-center justify-between">

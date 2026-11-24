@@ -36,9 +36,11 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="aurora-hero min-h-screen bg-[#f6f7fb] px-6 py-14">
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-7 shadow-[0_20px_50px_-28px_rgba(124,58,237,0.28)] backdrop-blur-md">
+    <main className="aurora-hero relative min-h-screen overflow-hidden px-6 py-14">
+      <div className="pointer-events-none absolute -top-20 -left-20 h-96 w-96 rounded-full bg-emerald-400/25 blur-3xl" />
+      <div className="pointer-events-none absolute top-16 -right-24 h-[26rem] w-[26rem] rounded-full bg-violet-500/25 blur-3xl" />
+      <div className="relative mx-auto max-w-5xl">
+        <header className="glass-panel mb-10 flex flex-wrap items-center justify-between gap-4 rounded-3xl p-7">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-sm">

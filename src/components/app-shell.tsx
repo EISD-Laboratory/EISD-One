@@ -194,10 +194,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f6f7fb]">
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-5 py-3 shadow-sm">
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="glass-panel flex items-center gap-3 rounded-2xl px-5 py-3">
           <span className="h-3 w-3 animate-pulse rounded-full bg-brand-gradient" />
-          <span className="text-sm font-medium text-slate-600">Memuat EISD One...</span>
+          <span className="text-sm font-medium text-slate-700">Memuat EISD One...</span>
         </div>
       </div>
     );
@@ -224,15 +224,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           href={item.href}
           className={`group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13.5px] font-medium transition-all ${
             active
-              ? 'bg-white text-slate-900 shadow-[0_2px_10px_-3px_rgba(124,58,237,0.22)] ring-1 ring-violet-200/75'
-              : 'text-slate-600 hover:bg-white/80 hover:text-slate-900'
+              ? 'glass-tile text-slate-900 ring-1 ring-violet-300/60'
+              : 'text-slate-600 hover:bg-white/55 hover:text-slate-900'
           }`}
         >
           <span
             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all ${
               active
                 ? 'bg-brand-gradient text-white shadow-sm'
-                : 'bg-slate-100/80 text-slate-500 group-hover:bg-violet-50 group-hover:text-violet-700'
+                : 'bg-white/65 text-slate-500 ring-1 ring-white/80 group-hover:bg-violet-50/90 group-hover:text-violet-700'
             }`}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -261,9 +261,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-screen bg-[#f6f7fb]">
-      {/* Sidebar Modern (Light Airy + Green-Purple Accent) */}
-      <aside className="flex w-[264px] shrink-0 flex-col border-r border-slate-200/80 bg-[#fbfbfe]">
+    <div className="relative flex min-h-screen overflow-x-clip">
+      {/* Bola cahaya ambient lembut hijau–ungu di belakang seluruh lapisan glass */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-emerald-300/30 blur-3xl" />
+        <div className="absolute top-12 right-[-6rem] h-[28rem] w-[28rem] rounded-full bg-violet-400/25 blur-3xl" />
+        <div className="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-teal-300/20 blur-3xl" />
+        <div className="absolute right-1/4 bottom-0 h-80 w-80 rounded-full bg-purple-300/25 blur-3xl" />
+      </div>
+
+      {/* Sidebar Glassmorphism (Light Frosted + Green-Purple Accent) */}
+      <aside className="glass-sidebar flex w-[264px] shrink-0 flex-col">
         {/* Brand Header */}
         <div className="flex items-center justify-between px-4 pt-5 pb-3">
           <Link href="/dashboard" className="flex items-center gap-2.5">
@@ -341,8 +349,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         {/* Bottom Segmented Meter Widget + User Strip */}
-        <div className="space-y-3 border-t border-slate-200/75 p-3.5">
-          <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
+        <div className="space-y-3 border-t border-white/60 p-3.5">
+          <div className="glass-tile rounded-xl p-3">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700">Modul Aktif</span>
               <span className="font-semibold text-violet-700">
@@ -354,7 +362,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 const filled = idx < filledTicks;
                 const ratio = idx / (totalTicks - 1);
                 const barColor = !filled
-                  ? 'bg-slate-200/80'
+                  ? 'bg-slate-200/70'
                   : ratio < 0.45
                     ? 'bg-emerald-500'
                     : ratio < 0.72
@@ -366,7 +374,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {hasPermission('custom_module.manage') && (
               <Link
                 href="/custom-modules"
-                className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-violet-200/80 bg-brand-gradient-soft py-1.5 text-[11.5px] font-semibold text-violet-800 transition hover:border-violet-300"
+                className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/80 bg-brand-gradient-soft py-1.5 text-[11.5px] font-semibold text-violet-900 backdrop-blur-sm transition hover:brightness-95"
               >
                 <Sparkles className="h-3 w-3 text-emerald-600" />
                 Buat Custom Module
@@ -374,14 +382,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200/80 bg-white p-2.5">
+          <div className="glass-tile rounded-xl p-2.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold text-white">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold text-white shadow-sm">
                 {getInitials(user.fullName)}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-slate-900">{user.fullName}</p>
-                <p className="truncate text-[11px] text-slate-500">
+                <p className="truncate text-[11px] text-slate-600">
                   {user.roles[0]?.name ?? user.email}
                 </p>
               </div>
@@ -390,7 +398,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => void logout()}
-                className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-slate-200 py-1.5 text-[11.5px] font-medium text-slate-700 hover:bg-slate-50"
+                className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-white/80 bg-white/60 py-1.5 text-[11.5px] font-medium text-slate-700 backdrop-blur-sm hover:bg-white/90"
               >
                 <LogOut className="h-3 w-3" /> Keluar
               </button>
@@ -398,7 +406,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 type="button"
                 onClick={() => void logoutAll()}
                 title="Keluar dari semua perangkat"
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-[11px] text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                className="rounded-lg border border-white/80 bg-white/60 px-2 py-1.5 text-[11px] text-slate-600 backdrop-blur-sm hover:bg-white/90 hover:text-slate-900"
               >
                 Semua
               </button>
@@ -407,25 +415,25 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Workspace Area with Crisp Top Header */}
+      {/* Main Workspace Area with Crisp Glass Top Header */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200/75 bg-white/85 px-6 backdrop-blur-md lg:px-8">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+        <header className="glass-topbar sticky top-0 z-20 flex h-14 items-center justify-between px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
             <Link
               href="/dashboard"
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-white/70 hover:text-slate-800"
             >
               <Home className="h-3.5 w-3.5" />
             </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-            <span className="font-semibold text-slate-800">{breadcrumbLabel}</span>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+            <span className="font-semibold text-slate-900">{breadcrumbLabel}</span>
           </div>
 
           <div className="flex items-center gap-2.5">
             {hasPermission('member.member.read') && (
               <Link
                 href="/members"
-                className="hidden items-center gap-1.5 rounded-full border border-slate-200/90 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-violet-300 hover:text-violet-700 sm:inline-flex"
+                className="glass-tile hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-white/90 hover:text-violet-700 sm:inline-flex"
               >
                 <Plus className="h-3.5 w-3.5 text-emerald-600" />
                 Kelola Anggota
@@ -433,7 +441,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
             <Link
               href="/calendar"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-500 transition hover:border-emerald-300 hover:text-emerald-600"
+              className="glass-tile flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-white/90 hover:text-emerald-600"
               title="Kalender EISD"
             >
               <CalendarDays className="h-3.5 w-3.5" />
@@ -441,13 +449,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             {hasPermission('settings.system.read') && (
               <Link
                 href="/settings"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-500 transition hover:border-violet-300 hover:text-violet-600"
+                className="glass-tile flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition hover:bg-white/90 hover:text-violet-600"
                 title="Pengaturan"
               >
                 <Settings className="h-3.5 w-3.5" />
               </Link>
             )}
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-bold text-white ring-2 ring-violet-100">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-bold text-white ring-2 ring-white/80 shadow-sm">
               {getInitials(user.fullName)}
             </div>
           </div>

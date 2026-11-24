@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --canvas-bg: #f6f7fb;
+    --canvas-bg: #eef2f9;
     --brand-green: #10b981;
     --brand-purple: #7c3aed;
   }
@@ -22,23 +22,30 @@
       'Segoe UI',
       sans-serif;
     background-image:
-      radial-gradient(60% 45% at 0% 0%, rgba(16, 185, 129, 0.06), transparent 60%),
-      radial-gradient(55% 45% at 100% 0%, rgba(124, 58, 237, 0.07), transparent 60%);
+      radial-gradient(46% 42% at 6% 8%, rgba(16, 185, 129, 0.24), transparent 64%),
+      radial-gradient(48% 44% at 94% 10%, rgba(139, 92, 246, 0.26), transparent 65%),
+      radial-gradient(42% 40% at 78% 88%, rgba(16, 185, 129, 0.18), transparent 64%),
+      radial-gradient(44% 42% at 18% 92%, rgba(168, 85, 247, 0.2), transparent 66%);
     background-attachment: fixed;
   }
 
-  input,
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
   select,
   textarea {
+    background-color: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-color: rgba(148, 163, 184, 0.35);
     @apply transition duration-150;
   }
 
-  input:focus,
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):focus,
   select:focus,
   textarea:focus {
     outline: none;
-    border-color: #8b5cf6 !important;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14);
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(139, 92, 246, 0.7) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.16);
   }
 }
 
@@ -50,8 +57,8 @@
   .bg-brand-gradient-soft {
     background-image: linear-gradient(
       135deg,
-      rgba(16, 185, 129, 0.12) 0%,
-      rgba(124, 58, 237, 0.14) 100%
+      rgba(16, 185, 129, 0.15) 0%,
+      rgba(124, 58, 237, 0.18) 100%
     );
   }
 
@@ -65,7 +72,9 @@
   .btn-brand {
     background-image: linear-gradient(135deg, #059669 0%, #7c3aed 100%);
     color: #ffffff;
-    box-shadow: 0 6px 18px -6px rgba(109, 40, 217, 0.45);
+    box-shadow:
+      0 8px 20px -6px rgba(109, 40, 217, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28);
     transition:
       transform 150ms ease,
       box-shadow 150ms ease,
@@ -74,52 +83,104 @@
 
   .btn-brand:hover {
     filter: brightness(1.06);
-    box-shadow: 0 10px 22px -6px rgba(16, 185, 129, 0.42);
+    box-shadow:
+      0 12px 24px -6px rgba(16, 185, 129, 0.44),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
   }
 
   .btn-brand:active {
     transform: translateY(0.5px);
   }
 
-  /* Aurora pastel glow untuk kartu KPI (paduan hijau emerald & ungu violet) */
+  /* Permukaan Glassmorphism Utama */
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(18px) saturate(165%);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    box-shadow:
+      0 10px 32px -12px rgba(109, 40, 217, 0.16),
+      0 2px 6px -1px rgba(15, 23, 42, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  .glass-sidebar {
+    background-color: rgba(255, 255, 255, 0.56);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    border-right: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow:
+      6px 0 28px -14px rgba(109, 40, 217, 0.14),
+      inset -1px 0 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .glass-topbar {
+    background-color: rgba(255, 255, 255, 0.58);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.74);
+    box-shadow: 0 4px 20px -12px rgba(15, 23, 42, 0.08);
+  }
+
+  .glass-tile {
+    background-color: rgba(255, 255, 255, 0.56);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    box-shadow:
+      0 4px 14px -6px rgba(109, 40, 217, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  .glass-dark {
+    background-color: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.45);
+  }
+
+  /* Aurora frosted glass untuk kartu KPI (hijau emerald & ungu violet) */
   .aurora-card-purple {
     background-image:
-      radial-gradient(ellipse 75% 85% at 88% 5%, rgba(167, 139, 250, 0.45), transparent 68%),
+      radial-gradient(ellipse 75% 85% at 88% 5%, rgba(167, 139, 250, 0.42), transparent 68%),
       radial-gradient(ellipse 55% 65% at 62% 0%, rgba(110, 231, 183, 0.28), transparent 65%);
   }
 
   .aurora-card-green {
     background-image:
-      radial-gradient(ellipse 78% 85% at 88% 5%, rgba(52, 211, 153, 0.42), transparent 68%),
+      radial-gradient(ellipse 78% 85% at 88% 5%, rgba(52, 211, 153, 0.4), transparent 68%),
       radial-gradient(ellipse 55% 65% at 62% 0%, rgba(196, 181, 253, 0.34), transparent 65%);
   }
 
   .aurora-card-blend {
     background-image:
-      radial-gradient(ellipse 70% 80% at 92% 6%, rgba(139, 92, 246, 0.42), transparent 65%),
-      radial-gradient(ellipse 65% 75% at 65% 2%, rgba(16, 185, 129, 0.36), transparent 66%);
+      radial-gradient(ellipse 70% 80% at 92% 6%, rgba(139, 92, 246, 0.4), transparent 65%),
+      radial-gradient(ellipse 65% 75% at 65% 2%, rgba(16, 185, 129, 0.34), transparent 66%);
   }
 
   .aurora-card-orchid {
     background-image:
-      radial-gradient(ellipse 75% 85% at 88% 8%, rgba(192, 132, 252, 0.44), transparent 68%),
+      radial-gradient(ellipse 75% 85% at 88% 8%, rgba(192, 132, 252, 0.42), transparent 68%),
       radial-gradient(ellipse 55% 60% at 58% 0%, rgba(45, 212, 191, 0.28), transparent 65%);
   }
 
   .aurora-hero {
     background-image:
-      radial-gradient(45% 40% at 15% 15%, rgba(16, 185, 129, 0.16), transparent 70%),
-      radial-gradient(45% 40% at 85% 18%, rgba(139, 92, 246, 0.18), transparent 70%),
-      radial-gradient(40% 35% at 50% 90%, rgba(167, 139, 250, 0.1), transparent 75%);
+      radial-gradient(48% 42% at 14% 16%, rgba(16, 185, 129, 0.28), transparent 68%),
+      radial-gradient(48% 44% at 86% 18%, rgba(139, 92, 246, 0.3), transparent 68%),
+      radial-gradient(44% 38% at 52% 90%, rgba(16, 185, 129, 0.2), transparent 72%);
   }
 }
 
-/* Konsistensi otomatis untuk tombol aksi utama di seluruh halaman modul */
+/* Konsistensi otomatis untuk tombol & sub-kartu di seluruh halaman modul */
 main button.bg-slate-900,
 main a.bg-slate-900 {
   background-image: linear-gradient(135deg, #059669 0%, #7c3aed 100%) !important;
   border-color: transparent !important;
-  box-shadow: 0 6px 16px -6px rgba(124, 58, 237, 0.42);
+  box-shadow:
+    0 8px 18px -6px rgba(124, 58, 237, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
   transition:
     filter 150ms ease,
     box-shadow 150ms ease;
@@ -128,7 +189,12 @@ main a.bg-slate-900 {
 main button.bg-slate-900:hover,
 main a.bg-slate-900:hover {
   filter: brightness(1.06);
-  box-shadow: 0 10px 20px -6px rgba(16, 185, 129, 0.42);
+  box-shadow: 0 10px 22px -6px rgba(16, 185, 129, 0.42);
+}
+
+main .bg-slate-50 {
+  background-color: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(8px);
 }
 
 main tbody tr {
@@ -136,7 +202,7 @@ main tbody tr {
 }
 
 main tbody tr:hover {
-  background-color: rgba(139, 92, 246, 0.035);
+  background-color: rgba(255, 255, 255, 0.55);
 }
 
 /* Scrollbar halus */
@@ -148,9 +214,9 @@ main tbody tr:hover {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
+  background: rgba(124, 58, 237, 0.22);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 58, 237, 0.4);
+  background: rgba(16, 185, 129, 0.42);
 }

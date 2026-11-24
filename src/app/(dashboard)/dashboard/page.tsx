@@ -247,34 +247,34 @@ export default function RoleDashboardPage() {
         </div>
       </div>
 
-      {/* Row 1: Aurora Pastel Gradient Stat Cards (Hijau × Ungu) */}
+      {/* Row 1: Aurora Frosted Glass KPI Cards (Hijau × Ungu) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpiCards.map((card) => {
           const Icon = card.icon;
           return (
             <div
               key={card.label}
-              className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03),0_10px_28px_-18px_rgba(109,40,217,0.18)] transition hover:-translate-y-0.5 hover:border-violet-200 ${card.aurora}`}
+              className={`glass-panel group relative overflow-hidden rounded-2xl p-5 transition hover:-translate-y-0.5 hover:border-white ${card.aurora}`}
             >
               {/* Dekorasi sparkle halus ala kartu referensi */}
               <Sparkles
-                className="pointer-events-none absolute top-7 right-24 h-3.5 w-3.5 text-white/80"
+                className="pointer-events-none absolute top-7 right-24 h-3.5 w-3.5 text-white/85"
                 aria-hidden="true"
               />
               <div className="relative flex items-start justify-between">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/70 bg-white/95 shadow-sm">
+                <span className="glass-tile flex h-10 w-10 items-center justify-center rounded-xl">
                   <Icon className={`h-4 w-4 ${card.iconColor}`} />
                 </span>
                 <Link
                   href={card.href}
-                  className="rounded-full border border-white/80 bg-white/85 px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-violet-700"
+                  className="glass-tile rounded-full px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-white/95 hover:text-violet-700"
                 >
                   Lihat detail
                 </Link>
               </div>
               <div className="relative mt-6">
                 <p className="text-2xl font-bold tracking-tight text-slate-900">{card.value}</p>
-                <p className="mt-0.5 text-xs font-medium text-slate-500">{card.label}</p>
+                <p className="mt-0.5 text-xs font-medium text-slate-600">{card.label}</p>
               </div>
             </div>
           );
@@ -286,7 +286,7 @@ export default function RoleDashboardPage() {
         <Card className="lg:col-span-7">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient-soft text-violet-700">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient-soft text-violet-700 backdrop-blur-sm">
                 <BarChart3 className="h-4 w-4" />
               </span>
               <div>
@@ -297,7 +297,7 @@ export default function RoleDashboardPage() {
               </div>
             </div>
             {highlightedDiv && (
-              <div className="rounded-xl bg-slate-900 px-3 py-2 text-right text-white shadow-lg">
+              <div className="glass-dark rounded-xl px-3 py-2 text-right text-white">
                 <p className="text-[10.5px] font-medium text-slate-300">{highlightedDiv.name}</p>
                 <div className="mt-0.5 flex items-center gap-2 text-xs font-semibold">
                   <span className="inline-flex items-center gap-1">
@@ -441,14 +441,14 @@ export default function RoleDashboardPage() {
 
       {/* Row 3: Tabel Operasional Bertab ala "Assigned to Me" */}
       <Card>
-        <CardHeader className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader className="flex flex-col gap-3 border-b border-white/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Ringkasan Operasional Lab</CardTitle>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Pantau agenda terdekat, event terbuka, dan status seluruh modul divisi
             </p>
           </div>
-          <div className="inline-flex rounded-xl bg-slate-100/90 p-1 text-xs font-medium">
+          <div className="glass-tile inline-flex rounded-xl p-1 text-xs font-medium">
             {[
               { id: 'calendar', label: `Agenda (${data.upcomingCalendar.length})` },
               { id: 'events', label: `Event (${data.upcomingEvents.length})` },
@@ -460,7 +460,7 @@ export default function RoleDashboardPage() {
                 onClick={() => setActiveTab(tab.id as 'calendar' | 'events' | 'modules')}
                 className={`rounded-lg px-3 py-1.5 transition ${
                   activeTab === tab.id
-                    ? 'bg-white font-semibold text-violet-700 shadow-sm'
+                    ? 'bg-white/90 font-semibold text-violet-700 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >

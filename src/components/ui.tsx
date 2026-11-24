@@ -12,11 +12,11 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 const badgeStyles: Record<NonNullable<BadgeProps['variant']>, string> = {
   default: 'bg-brand-gradient text-white shadow-sm',
-  success: 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
-  purple: 'bg-violet-50 text-violet-700 border border-violet-200/80',
-  warning: 'bg-amber-50 text-amber-700 border border-amber-200/80',
-  danger: 'bg-rose-50 text-rose-700 border border-rose-200/80',
-  secondary: 'bg-slate-100/90 text-slate-700 border border-slate-200/80',
+  success: 'bg-emerald-50/80 text-emerald-700 border border-emerald-200/80 backdrop-blur-sm',
+  purple: 'bg-violet-50/80 text-violet-700 border border-violet-200/80 backdrop-blur-sm',
+  warning: 'bg-amber-50/80 text-amber-700 border border-amber-200/80 backdrop-blur-sm',
+  danger: 'bg-rose-50/80 text-rose-700 border border-rose-200/80 backdrop-blur-sm',
+  secondary: 'bg-white/70 text-slate-700 border border-white/80 backdrop-blur-sm shadow-sm',
 };
 
 export function Badge({ className, variant = 'default', ...props }: BadgeProps) {
@@ -33,15 +33,7 @@ export function Badge({ className, variant = 'default', ...props }: BadgeProps) 
 }
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border border-slate-200/75 bg-white text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.03),0_10px_28px_-18px_rgba(109,40,217,0.16)]',
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <div className={cn('glass-panel rounded-2xl text-slate-900', className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
