@@ -18,11 +18,13 @@ export async function GET() {
     const [
       activeMemberCount,
       divisions,
+      memberships,
       upcomingCalendar,
       upcomingEvents,
       pendingKpiManual,
       pendingRecognitions,
       customModulesCount,
+      recentAudits,
     ] = await Promise.all([
       isGlobal
         ? prisma.member.count({ where: { status: MemberStatus.ACTIVE, deletedAt: null } })
@@ -44,6 +46,14 @@ export async function GET() {
         select: { id: true, code: true, name: true, isCustom: true, isEnabled: true },
         orderBy: [{ isCustom: 'asc' }, { name: 'asc' }],
       }),
+      prisma.membership.findMany({
+        where: {
+          deletedAt: null,
+          ...(activePeriod ? { periodId: activePeriod.id } : {}),
+          member: { status: MemberStatus.ACTIVE, deletedAt: null },
+        },
+        select: { divisionId: true, isHead: true },
+      }),
       prisma.calendarItem.findMany({
         where: {
           deletedAt: null,
@@ -53,7 +63,7 @@ export async function GET() {
             : { OR: [{ divisionId: null }, { divisionId: { in: user.divisionIds } }] }),
         },
         orderBy: { startAt: 'asc' },
-        take: 6,
+        take: 8,
       }),
       prisma.eventItem.findMany({
         where: { deletedAt: null, startAt: { gte: now } },
@@ -62,11 +72,13 @@ export async function GET() {
           slug: true,
           title: true,
           startAt: true,
+          location: true,
           status: true,
           isPublicOpen: true,
+          _count: { select: { participants: { where: { deletedAt: null } } } },
         },
         orderBy: { startAt: 'asc' },
-        take: 4,
+        take: 6,
       }),
       isGlobal
         ? prisma.kpiScore.count({
@@ -79,6 +91,19 @@ export async function GET() {
           })
         : Promise.resolve(0),
       prisma.customModuleSchema.count({ where: { deletedAt: null } }),
+      prisma.auditLog.findMany({
+        where: isGlobal ? {} : { actorId: user.id },
+        select: {
+          id: true,
+          actorEmail: true,
+          action: true,
+          module: true,
+          entityType: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 7,
+      }),
     ]);
 
     // Saldo kas Core hanya untuk pengguna yang punya izin membaca keuangan Core
@@ -93,6 +118,37 @@ export async function GET() {
         0,
       );
     }
+
+    const memberCountByDiv = new Map<string, { total: number; heads: number }>();
+    for (const m of memberships) {
+      const curr = memberCountByDiv.get(m.divisionId) ?? { total: 0, heads: 0 };
+      curr.total += 1;
+      if (m.isHead) curr.heads += 1;
+      memberCountByDiv.set(m.divisionId, curr);
+    }
+
+    const divisionStats = divisions
+      .filter((d) => !d.isCustom)
+      .map((d) => {
+        const counts = memberCountByDiv.get(d.id) ?? { total: 0, heads: 0 };
+        return {
+          code: d.code,
+          name: d.name,
+          shortLabel:
+            d.code === 'research'
+              ? 'R&C'
+              : d.code === 'study-group'
+                ? 'SG'
+                : d.code === 'competition'
+                  ? 'COMP'
+                  : d.code === 'praktikum'
+                    ? 'PRK'
+                    : d.code.toUpperCase().slice(0, 4),
+          memberCount: counts.total,
+          headCount: counts.heads,
+          isEnabled: d.isEnabled,
+        };
+      });
 
     const userDivisions = divisions.filter((d) => user.divisionIds.includes(d.id));
 
@@ -111,8 +167,19 @@ export async function GET() {
         pendingRecognitions,
       },
       divisions,
+      divisionStats,
       upcomingCalendar,
-      upcomingEvents,
+      upcomingEvents: upcomingEvents.map((ev) => ({
+        id: ev.id,
+        slug: ev.slug,
+        title: ev.title,
+        startAt: ev.startAt,
+        location: ev.location,
+        status: ev.status,
+        isPublicOpen: ev.isPublicOpen,
+        participantCount: ev._count.participants,
+      })),
+      recentActivities: recentAudits,
     });
   } catch (error) {
     return handleRouteError(error);

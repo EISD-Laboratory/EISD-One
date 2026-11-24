@@ -2,7 +2,155 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #f8fafc;
-  color: #0f172a;
+@layer base {
+  :root {
+    --canvas-bg: #f6f7fb;
+    --brand-green: #10b981;
+    --brand-purple: #7c3aed;
+  }
+
+  body {
+    background-color: var(--canvas-bg);
+    color: #0f172a;
+    font-family:
+      'Plus Jakarta Sans',
+      'Inter',
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
+    background-image:
+      radial-gradient(60% 45% at 0% 0%, rgba(16, 185, 129, 0.06), transparent 60%),
+      radial-gradient(55% 45% at 100% 0%, rgba(124, 58, 237, 0.07), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply transition duration-150;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14);
+  }
+}
+
+@layer components {
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, #10b981 0%, #6d28d9 100%);
+  }
+
+  .bg-brand-gradient-soft {
+    background-image: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.12) 0%,
+      rgba(124, 58, 237, 0.14) 100%
+    );
+  }
+
+  .text-brand-gradient {
+    background-image: linear-gradient(135deg, #059669 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .btn-brand {
+    background-image: linear-gradient(135deg, #059669 0%, #7c3aed 100%);
+    color: #ffffff;
+    box-shadow: 0 6px 18px -6px rgba(109, 40, 217, 0.45);
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease,
+      filter 150ms ease;
+  }
+
+  .btn-brand:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 10px 22px -6px rgba(16, 185, 129, 0.42);
+  }
+
+  .btn-brand:active {
+    transform: translateY(0.5px);
+  }
+
+  /* Aurora pastel glow untuk kartu KPI (paduan hijau emerald & ungu violet) */
+  .aurora-card-purple {
+    background-image:
+      radial-gradient(ellipse 75% 85% at 88% 5%, rgba(167, 139, 250, 0.45), transparent 68%),
+      radial-gradient(ellipse 55% 65% at 62% 0%, rgba(110, 231, 183, 0.28), transparent 65%);
+  }
+
+  .aurora-card-green {
+    background-image:
+      radial-gradient(ellipse 78% 85% at 88% 5%, rgba(52, 211, 153, 0.42), transparent 68%),
+      radial-gradient(ellipse 55% 65% at 62% 0%, rgba(196, 181, 253, 0.34), transparent 65%);
+  }
+
+  .aurora-card-blend {
+    background-image:
+      radial-gradient(ellipse 70% 80% at 92% 6%, rgba(139, 92, 246, 0.42), transparent 65%),
+      radial-gradient(ellipse 65% 75% at 65% 2%, rgba(16, 185, 129, 0.36), transparent 66%);
+  }
+
+  .aurora-card-orchid {
+    background-image:
+      radial-gradient(ellipse 75% 85% at 88% 8%, rgba(192, 132, 252, 0.44), transparent 68%),
+      radial-gradient(ellipse 55% 60% at 58% 0%, rgba(45, 212, 191, 0.28), transparent 65%);
+  }
+
+  .aurora-hero {
+    background-image:
+      radial-gradient(45% 40% at 15% 15%, rgba(16, 185, 129, 0.16), transparent 70%),
+      radial-gradient(45% 40% at 85% 18%, rgba(139, 92, 246, 0.18), transparent 70%),
+      radial-gradient(40% 35% at 50% 90%, rgba(167, 139, 250, 0.1), transparent 75%);
+  }
+}
+
+/* Konsistensi otomatis untuk tombol aksi utama di seluruh halaman modul */
+main button.bg-slate-900,
+main a.bg-slate-900 {
+  background-image: linear-gradient(135deg, #059669 0%, #7c3aed 100%) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 16px -6px rgba(124, 58, 237, 0.42);
+  transition:
+    filter 150ms ease,
+    box-shadow 150ms ease;
+}
+
+main button.bg-slate-900:hover,
+main a.bg-slate-900:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 10px 20px -6px rgba(16, 185, 129, 0.42);
+}
+
+main tbody tr {
+  transition: background-color 140ms ease;
+}
+
+main tbody tr:hover {
+  background-color: rgba(139, 92, 246, 0.035);
+}
+
+/* Scrollbar halus */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.4);
 }

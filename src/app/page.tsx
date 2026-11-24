@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { ArrowRight, CalendarDays, Layers, ShieldCheck, Sparkles } from 'lucide-react';
 import { getSessionUser } from '@/core/auth';
 import { prisma } from '@/core/db';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
@@ -35,91 +36,112 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">EISD One</h1>
-            <Badge variant="secondary">Lean Modular Fullstack</Badge>
+    <main className="aurora-hero min-h-screen bg-[#f6f7fb] px-6 py-14">
+      <div className="mx-auto max-w-5xl">
+        <header className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-7 shadow-[0_20px_50px_-28px_rgba(124,58,237,0.28)] backdrop-blur-md">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-sm">
+                <Sparkles className="h-5 w-5" />
+              </span>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                EISD <span className="text-brand-gradient">One</span>
+              </h1>
+              <Badge variant="purple">Modular Platform</Badge>
+            </div>
+            <p className="max-w-xl text-sm text-slate-600">
+              Platform internal terpadu & modular per divisi untuk operasional Laboratorium EISD —
+              data anggota, KPI, kas, kegiatan, hingga Custom Module dalam satu workspace modern.
+            </p>
           </div>
-          <p className="mt-1 text-slate-600">
-            Satu sistem terpadu & modular per divisi untuk laboratorium EISD.
-          </p>
-        </div>
-        <Link
-          href="/login"
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          Masuk ke Dashboard →
-        </Link>
-      </header>
+          <Link
+            href="/login"
+            className="btn-brand inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold"
+          >
+            Masuk ke Dashboard <ArrowRight className="h-4 w-4" />
+          </Link>
+        </header>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Status Sistem</span>
-              <Badge variant={dbHealthy ? 'success' : 'danger'}>
-                {dbHealthy ? 'ONLINE' : 'DB OFFLINE'}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-slate-600">
-            <p>
-              Arsitektur: <strong>2 Container</strong> (Next.js App + PostgreSQL)
-            </p>
-            <p>
-              Inti aktif: Auth & RBAC, Data Anggota, Import/Export Excel & CSV, KPI Dinamis,
-              Kalender, Custom Module Builder, Audit Log.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="aurora-card-green">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  Status Sistem
+                </span>
+                <Badge variant={dbHealthy ? 'success' : 'danger'}>
+                  {dbHealthy ? '● ONLINE' : '● DB OFFLINE'}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-slate-600">
+              <p>
+                Arsitektur: <strong className="text-slate-900">Lean Modular Fullstack</strong>{' '}
+                (Next.js + PostgreSQL).
+              </p>
+              <p>
+                Inti aktif: Auth & RBAC, Data Anggota, Import/Export Excel & CSV, KPI Lintas Modul,
+                Kalender, Custom Module Builder, Audit Log.
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Modul Divisi ({divisions.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {divisions.map((d) => (
-              <Badge key={d.code} variant={d.isEnabled ? 'secondary' : 'danger'}>
-                {d.name}
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {publicEvents.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Event Terbuka (Pendaftaran Publik)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {publicEvents.map((ev) => (
-              <div
-                key={ev.slug}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{ev.title}</p>
-                  <p className="text-xs text-slate-500">
-                    {new Date(ev.startAt).toLocaleDateString('id-ID', {
-                      dateStyle: 'medium',
-                      timeZone: 'Asia/Jakarta',
-                    })}
-                  </p>
-                </div>
-                <Link
-                  href={`/register/${ev.slug}`}
-                  className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+          <Card className="aurora-card-purple">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-violet-600" />
+                Modul Divisi ({divisions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {divisions.map((d, i) => (
+                <Badge
+                  key={d.code}
+                  variant={!d.isEnabled ? 'danger' : i % 2 === 0 ? 'success' : 'purple'}
                 >
-                  Daftar Sekarang
-                </Link>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+                  {d.name}
+                </Badge>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {publicEvents.length > 0 && (
+          <Card className="mt-6 overflow-hidden">
+            <CardHeader className="border-b border-slate-100">
+              <CardTitle className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-emerald-600" />
+                Event Terbuka (Pendaftaran Publik)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5 pt-4">
+              {publicEvents.map((ev) => (
+                <div
+                  key={ev.slug}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 px-4 py-3 text-sm transition hover:border-violet-200 hover:bg-white"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">{ev.title}</p>
+                    <p className="text-xs text-slate-500">
+                      {new Date(ev.startAt).toLocaleDateString('id-ID', {
+                        dateStyle: 'medium',
+                        timeZone: 'Asia/Jakarta',
+                      })}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/register/${ev.slug}`}
+                    className="btn-brand rounded-xl px-3.5 py-1.5 text-xs font-semibold"
+                  >
+                    Daftar Sekarang
+                  </Link>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </main>
   );
 }

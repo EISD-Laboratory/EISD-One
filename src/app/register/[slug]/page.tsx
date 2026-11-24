@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { useParams } from 'next/navigation';
+import { CalendarDays, Sparkles } from 'lucide-react';
 import { apiFetch } from '@/components/client-api';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
@@ -42,29 +43,36 @@ export default function PublicEventRegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
+    <main className="aurora-hero flex min-h-screen items-center justify-center bg-[#f6f7fb] px-4 py-10">
+      <Card className="w-full max-w-lg overflow-hidden shadow-[0_20px_50px_-24px_rgba(109,40,217,0.28)]">
+        <div className="h-2 w-full bg-brand-gradient" />
+        <CardHeader className="aurora-card-blend">
           <div className="flex items-center justify-between">
-            <Badge variant="secondary">Pendaftaran Kegiatan EISD</Badge>
+            <Badge variant="purple" className="gap-1.5">
+              <Sparkles className="h-3 w-3 text-emerald-600" />
+              Pendaftaran Kegiatan EISD
+            </Badge>
           </div>
-          <CardTitle className="mt-2 text-xl">{event?.title || 'Memuat Event...'}</CardTitle>
+          <CardTitle className="mt-2 text-xl font-bold">
+            {event?.title || 'Memuat Event...'}
+          </CardTitle>
           {event && (
-            <p className="text-xs text-slate-500">
+            <p className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600">
+              <CalendarDays className="h-3.5 w-3.5 text-emerald-600" />
               {new Date(event.startAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} ·{' '}
               {event.location || '-'}
               {event.speaker ? ` · Narasumber: ${event.speaker}` : ''}
             </p>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {error && (
-            <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
               {error}
             </div>
           )}
           {done ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
               <p className="font-semibold">Pendaftaran berhasil tercatat!</p>
               <p className="mt-1 text-xs">
                 Terima kasih, <strong>{form.name}</strong>. Anda sudah terdaftar untuk mengikuti
@@ -81,30 +89,30 @@ export default function PublicEventRegisterPage() {
                 placeholder="Nama Lengkap *"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm focus:bg-white"
               />
               <input
                 placeholder="NIM (opsional)"
                 value={form.nim}
                 onChange={(e) => setForm({ ...form, nim: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm focus:bg-white"
               />
               <input
                 type="email"
                 placeholder="Email (opsional)"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm focus:bg-white"
               />
               <input
                 placeholder="Prodi / Instansi"
                 value={form.institution}
                 onChange={(e) => setForm({ ...form, institution: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm focus:bg-white"
               />
               <button
                 type="submit"
-                className="w-full rounded-lg bg-slate-900 py-2 text-sm font-medium text-white"
+                className="btn-brand w-full rounded-xl py-2.5 text-sm font-semibold"
               >
                 Daftar Sekarang
               </button>
