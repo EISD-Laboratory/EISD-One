@@ -22,7 +22,7 @@ export default function LoginPage() {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-      router.push('/dashboard');
+      router.push('/apps');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login gagal.');
     } finally {

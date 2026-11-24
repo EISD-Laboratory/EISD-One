@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Download, RotateCcw, Upload } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, Download, RotateCcw, Upload } from 'lucide-react';
 import { apiFetch } from '@/components/client-api';
 import { FieldGroup, GlassFileDropzone, GlassSelect } from '@/components/glass-inputs';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
@@ -108,6 +109,12 @@ export default function MembersImportPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
+          <Link
+            href="/members"
+            className="mb-1.5 inline-flex items-center gap-1 text-xs font-semibold text-violet-700 hover:underline"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Data Anggota
+          </Link>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Import Excel / CSV Anggota
           </h1>

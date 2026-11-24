@@ -586,13 +586,16 @@ export async function generateMemberTemplate(format: 'xlsx' | 'csv') {
 
 export async function exportMembersFile(
   format: 'xlsx' | 'csv',
-  filters: { search?: string; status?: string; divisionId?: string },
+  filters: { search?: string; status?: string; divisionId?: string; generation?: string },
   actor: SessionUser,
 ) {
   const canViewAll = actor.isSuperAdmin || actor.permissions.includes('member.member.view_all');
   const where: Prisma.MemberWhereInput = { deletedAt: null };
   if (filters.status && ['ACTIVE', 'LEAVE', 'ALUMNI'].includes(filters.status)) {
     where.status = filters.status as MemberStatus;
+  }
+  if (filters.generation) {
+    where.generation = { equals: filters.generation, mode: 'insensitive' };
   }
   if (filters.search) {
     where.OR = [

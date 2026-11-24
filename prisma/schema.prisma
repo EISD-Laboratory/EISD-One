@@ -116,10 +116,11 @@ model Member {
   fullName  String       @map("full_name") @db.VarChar(160)
   email     String?      @unique @db.VarChar(180)
   birthDate DateTime?    @map("birth_date") @db.Date
-  phone     String?      @db.VarChar(40)
-  status    MemberStatus @default(ACTIVE)
-  batchYear Int?         @map("batch_year")
-  notes     String?      @db.Text
+  phone      String?      @db.VarChar(40)
+  status     MemberStatus @default(ACTIVE)
+  generation String?      @db.VarChar(20)
+  batchYear  Int?         @map("batch_year")
+  notes      String?      @db.Text
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -133,6 +134,7 @@ model Member {
   kpiResults  KpiResult[]
 
   @@index([status])
+  @@index([generation])
   @@index([fullName])
   @@map("core_members")
 }

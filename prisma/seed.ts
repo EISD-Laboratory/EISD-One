@@ -410,6 +410,7 @@ const DEMO_MEMBERS = [
     email: 'alya.pratama@example.edu',
     division: 'core',
     position: 'Ketua Lab',
+    generation: 'v6',
     isHead: true,
   },
   {
@@ -418,6 +419,7 @@ const DEMO_MEMBERS = [
     email: 'bima.mahendra@example.edu',
     division: 'core',
     position: 'Sekretaris Core',
+    generation: 'v6',
   },
   {
     nim: '1202220003',
@@ -425,6 +427,7 @@ const DEMO_MEMBERS = [
     email: 'citra.lestari@example.edu',
     division: 'core',
     position: 'Bendahara Core',
+    generation: 'v6',
   },
   {
     nim: '1202220004',
@@ -432,6 +435,7 @@ const DEMO_MEMBERS = [
     email: 'dimas.saputra@example.edu',
     division: 'event',
     position: 'Kadiv Event',
+    generation: 'v6',
     isHead: true,
   },
   {
@@ -440,6 +444,7 @@ const DEMO_MEMBERS = [
     email: 'eka.wulandari@example.edu',
     division: 'event',
     position: 'Staf Event',
+    generation: 'v7',
   },
   {
     nim: '1202220006',
@@ -447,6 +452,7 @@ const DEMO_MEMBERS = [
     email: 'fajar.nugroho@example.edu',
     division: 'enabler',
     position: 'Kadiv Enabler',
+    generation: 'v6',
     isHead: true,
   },
   {
@@ -455,6 +461,7 @@ const DEMO_MEMBERS = [
     email: 'gita.rahmawati@example.edu',
     division: 'research',
     position: 'Kadiv Research',
+    generation: 'v7',
     isHead: true,
   },
   {
@@ -463,6 +470,7 @@ const DEMO_MEMBERS = [
     email: 'hendra.wijaya@example.edu',
     division: 'praktikum',
     position: 'Kadiv Praktikum',
+    generation: 'v7',
     isHead: true,
   },
   {
@@ -471,6 +479,7 @@ const DEMO_MEMBERS = [
     email: 'intan.permata@example.edu',
     division: 'media',
     position: 'Kadiv Media',
+    generation: 'v7',
     isHead: true,
   },
   {
@@ -479,6 +488,7 @@ const DEMO_MEMBERS = [
     email: 'joko.santoso@example.edu',
     division: 'competition',
     position: 'Kadiv Competition',
+    generation: 'v7',
     isHead: true,
   },
 ];
@@ -792,7 +802,7 @@ async function main() {
     for (const demo of DEMO_MEMBERS) {
       const m = await prisma.member.upsert({
         where: { nim: demo.nim },
-        update: {},
+        update: { generation: demo.generation },
         create: {
           nim: demo.nim,
           fullName: demo.fullName,
@@ -800,7 +810,8 @@ async function main() {
           birthDate: new Date('2004-05-15T00:00:00.000Z'),
           phone: '081200000000',
           status: MemberStatus.ACTIVE,
-          batchYear: 2022,
+          generation: demo.generation,
+          batchYear: demo.generation === 'v6' ? 2022 : 2023,
         },
       });
       const divId = divMap.get(demo.division);

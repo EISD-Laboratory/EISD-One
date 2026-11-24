@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
         search: sp.get('search') || undefined,
         status: sp.get('status') || undefined,
         divisionId: sp.get('divisionId') || undefined,
+        generation: sp.get('generation') || undefined,
       },
       user,
     );

@@ -14,10 +14,20 @@ const createMemberSchema = z.object({
   birthDate: z.string().optional(),
   phone: z.string().optional(),
   status: z.nativeEnum(MemberStatus).default(MemberStatus.ACTIVE),
+  generation: z.string().max(20).optional(),
   batchYear: z.coerce.number().int().min(2000).max(2100).optional(),
   divisionId: z.string().uuid().optional(),
   positionTitle: z.string().optional(),
 });
+
+function sortGenerationsDesc(a: string, b: string): number {
+  const numA = Number.parseInt(a.replace(/[^0-9]/g, ''), 10);
+  const numB = Number.parseInt(b.replace(/[^0-9]/g, ''), 10);
+  if (!Number.isNaN(numA) && !Number.isNaN(numB) && numA !== numB) {
+    return numB - numA;
+  }
+  return a.localeCompare(b);
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,27 +38,44 @@ export async function GET(req: NextRequest) {
     const search = sp.get('search')?.trim() || '';
     const status = sp.get('status') || '';
     const divisionId = sp.get('divisionId') || '';
+    const generation = sp.get('generation')?.trim() || '';
 
     const canViewAll = user.isSuperAdmin || user.permissions.includes('member.member.view_all');
+    if (!canViewAll && user.divisionIds.length === 0) {
+      return NextResponse.json({
+        items: [],
+        meta: { total: 0, page, limit, totalPages: 1 },
+        facets: { totalAll: 0, generations: [], divisions: [] },
+      });
+    }
+    if (!canViewAll && divisionId && !user.divisionIds.includes(divisionId)) {
+      throw new HttpError(403, 'Anda hanya dapat melihat anggota divisi Anda sendiri.');
+    }
+
+    const scopeWhere: Prisma.MemberWhereInput = {
+      deletedAt: null,
+      ...(!canViewAll
+        ? { memberships: { some: { deletedAt: null, divisionId: { in: user.divisionIds } } } }
+        : {}),
+    };
+
     const where: Prisma.MemberWhereInput = { deletedAt: null };
     if (status && ['ACTIVE', 'LEAVE', 'ALUMNI'].includes(status)) {
       where.status = status as MemberStatus;
+    }
+    if (generation) {
+      where.generation = { equals: generation, mode: 'insensitive' };
     }
     if (search) {
       where.OR = [
         { nim: { contains: search, mode: 'insensitive' } },
         { fullName: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
+        { generation: { contains: search, mode: 'insensitive' } },
       ];
     }
 
     if (!canViewAll) {
-      if (user.divisionIds.length === 0) {
-        return NextResponse.json({ items: [], meta: { total: 0, page, limit, totalPages: 1 } });
-      }
-      if (divisionId && !user.divisionIds.includes(divisionId)) {
-        throw new HttpError(403, 'Anda hanya dapat melihat anggota divisi Anda sendiri.');
-      }
       where.memberships = {
         some: {
           deletedAt: null,
@@ -59,7 +86,7 @@ export async function GET(req: NextRequest) {
       where.memberships = { some: { deletedAt: null, divisionId } };
     }
 
-    const [items, total] = await Promise.all([
+    const [items, total, scopedMembers, visibleDivisions] = await Promise.all([
       prisma.member.findMany({
         where,
         include: {
@@ -76,11 +103,71 @@ export async function GET(req: NextRequest) {
         take: limit,
       }),
       prisma.member.count({ where }),
+      prisma.member.findMany({
+        where: scopeWhere,
+        select: {
+          id: true,
+          status: true,
+          generation: true,
+          memberships: {
+            where: { deletedAt: null },
+            select: { divisionId: true },
+          },
+        },
+      }),
+      prisma.division.findMany({
+        where: {
+          deletedAt: null,
+          isEnabled: true,
+          ...(!canViewAll ? { id: { in: user.divisionIds } } : {}),
+        },
+        select: { id: true, code: true, name: true },
+        orderBy: [{ isCustom: 'asc' }, { name: 'asc' }],
+      }),
     ]);
+
+    // Hitung jumlah anggota per generasi & per divisi untuk sidebar filter
+    const genMap = new Map<string, { count: number; activeCount: number }>();
+    const divCounts = new Map<string, Set<string>>();
+
+    for (const m of scopedMembers) {
+      const g = m.generation?.trim();
+      if (g) {
+        const curr = genMap.get(g) ?? { count: 0, activeCount: 0 };
+        curr.count += 1;
+        if (m.status === MemberStatus.ACTIVE) curr.activeCount += 1;
+        genMap.set(g, curr);
+      }
+      for (const ms of m.memberships) {
+        const set = divCounts.get(ms.divisionId) ?? new Set<string>();
+        set.add(m.id);
+        divCounts.set(ms.divisionId, set);
+      }
+    }
+
+    const generations = Array.from(genMap.entries())
+      .sort(([a], [b]) => sortGenerationsDesc(a, b))
+      .map(([gen, info]) => ({
+        generation: gen,
+        count: info.count,
+        activeCount: info.activeCount,
+      }));
+
+    const divisions = visibleDivisions.map((d) => ({
+      id: d.id,
+      code: d.code,
+      name: d.name,
+      count: divCounts.get(d.id)?.size ?? 0,
+    }));
 
     return NextResponse.json({
       items,
       meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) },
+      facets: {
+        totalAll: scopedMembers.length,
+        generations,
+        divisions,
+      },
     });
   } catch (error) {
     return handleRouteError(error);
@@ -116,6 +203,7 @@ export async function POST(req: NextRequest) {
         birthDate: data.birthDate ? new Date(data.birthDate) : null,
         phone: data.phone?.trim() || null,
         status: data.status,
+        generation: data.generation?.trim() || null,
         batchYear: data.batchYear ?? null,
         createdBy: user.id,
         updatedBy: user.id,
