@@ -15,9 +15,9 @@ import {
   Mail,
   Phone,
   Sparkles,
-  StickyNote,
   X,
 } from 'lucide-react';
+import { useBreadcrumb } from '@/components/app-shell';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
 import { FieldGroup, GlassSelect } from '@/components/glass-inputs';
@@ -33,7 +33,6 @@ interface MemberDetail {
   status: 'ACTIVE' | 'LEAVE' | 'ALUMNI';
   generation: string | null;
   batchYear: number | null;
-  notes: string | null;
   createdAt: string;
   memberships: Array<{
     id: string;
@@ -67,6 +66,7 @@ function getInitials(name: string): string {
 export default function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { hasPermission } = useAuth();
+  const { setExtraCrumbs } = useBreadcrumb();
   const canUpdate = hasPermission('member.member.update');
 
   const [member, setMember] = useState<MemberDetail | null>(null);
@@ -82,7 +82,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     status: 'ACTIVE' as MemberDetail['status'],
     generation: '',
     batchYear: '',
-    notes: '',
   });
 
   const load = useCallback(async () => {
@@ -97,13 +96,23 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       status: data.status,
       generation: data.generation ?? '',
       batchYear: data.batchYear ? String(data.batchYear) : '',
-      notes: data.notes ?? '',
     });
   }, [id]);
 
   useEffect(() => {
     void load().catch((e) => setError(e instanceof Error ? e.message : 'Gagal memuat profil.'));
   }, [load]);
+
+  useEffect(() => {
+    if (!member) return;
+    setExtraCrumbs([
+      {
+        label: member.fullName,
+        onClick: editing ? () => setEditing(false) : undefined,
+      },
+      ...(editing ? [{ label: 'Edit Data Diri' }] : []),
+    ]);
+  }, [member, editing, setExtraCrumbs]);
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
@@ -121,7 +130,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           status: form.status,
           generation: form.generation || null,
           batchYear: form.batchYear ? Number(form.batchYear) : null,
-          notes: form.notes || null,
         }),
       });
       setEditing(false);
@@ -329,15 +337,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                     className="w-full px-3.5 py-2.5 text-sm"
                   />
                 </FieldGroup>
-                <FieldGroup label="Catatan" className="sm:col-span-2">
-                  <textarea
-                    rows={3}
-                    placeholder="Keahlian, minat riset, atau catatan tambahan..."
-                    value={form.notes}
-                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm"
-                  />
-                </FieldGroup>
                 <div className="flex justify-end gap-2 sm:col-span-2">
                   <button
                     type="button"
@@ -398,16 +397,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                   );
                 })}
-
-                <div className="glass-tile rounded-xl p-3.5 sm:col-span-2">
-                  <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    <StickyNote className="h-3.5 w-3.5 text-emerald-600" />
-                    Catatan
-                  </p>
-                  <p className="mt-1 text-sm text-slate-700">
-                    {member.notes || 'Tidak ada catatan tambahan.'}
-                  </p>
-                </div>
               </div>
             )}
           </CardContent>

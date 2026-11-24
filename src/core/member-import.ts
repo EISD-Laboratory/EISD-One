@@ -51,6 +51,12 @@ export const MEMBER_COLUMNS: SheetColumn[] = [
   },
   { key: 'status', label: 'Status', example: 'ACTIVE', aliases: ['status_anggota'] },
   {
+    key: 'generation',
+    label: 'Generasi',
+    example: 'v7',
+    aliases: ['generasi', 'gen', 'angkatan_lab'],
+  },
+  {
     key: 'batchYear',
     label: 'Angkatan',
     example: '2024',
@@ -72,6 +78,7 @@ export interface ValidatedMemberRow {
   birthDate: Date | null;
   phone: string | null;
   status: MemberStatus;
+  generation: string | null;
   batchYear: number | null;
   divisionId: string | null;
   positionTitle: string;
@@ -94,6 +101,7 @@ export function validateMemberRow(
   const phone = (mapped.phone ?? '').trim() || null;
   const birthDateRaw = (mapped.birthDate ?? '').trim();
   const statusRaw = (mapped.status ?? '').trim().toUpperCase();
+  const generation = (mapped.generation ?? '').trim() || null;
   const batchYearRaw = (mapped.batchYear ?? '').trim();
   const divRaw = (mapped.divisionCode ?? '').trim().toLowerCase();
   const positionTitle = (mapped.positionTitle ?? '').trim() || 'Anggota';
@@ -151,7 +159,18 @@ export function validateMemberRow(
     valid: true,
     wouldSkip: isDup && ctx.strategy === ImportDuplicateStrategy.SKIP,
     errors: [],
-    data: { nim, fullName, email, birthDate, phone, status, batchYear, divisionId, positionTitle },
+    data: {
+      nim,
+      fullName,
+      email,
+      birthDate,
+      phone,
+      status,
+      generation,
+      batchYear,
+      divisionId,
+      positionTitle,
+    },
   };
 }
 
@@ -360,6 +379,7 @@ export async function commitMemberImport(
         birthDate: existing.birthDate?.toISOString() ?? null,
         phone: existing.phone,
         status: existing.status,
+        generation: existing.generation,
         batchYear: existing.batchYear,
       };
       const isMerge = strategy === ImportDuplicateStrategy.MERGE;
@@ -371,6 +391,7 @@ export async function commitMemberImport(
           birthDate: isMerge ? (d.birthDate ?? existing.birthDate) : d.birthDate,
           phone: isMerge ? (d.phone ?? existing.phone) : d.phone,
           status: d.status,
+          generation: isMerge ? (d.generation ?? existing.generation) : d.generation,
           batchYear: isMerge ? (d.batchYear ?? existing.batchYear) : d.batchYear,
           updatedBy: actor.id,
         },
@@ -416,6 +437,7 @@ export async function commitMemberImport(
             birthDate: d.birthDate,
             phone: d.phone,
             status: d.status,
+            generation: d.generation,
             batchYear: d.batchYear,
             deletedAt: null,
             updatedBy: actor.id,
@@ -429,6 +451,7 @@ export async function commitMemberImport(
             birthDate: d.birthDate,
             phone: d.phone,
             status: d.status,
+            generation: d.generation,
             batchYear: d.batchYear,
             createdBy: actor.id,
             updatedBy: actor.id,
@@ -539,6 +562,7 @@ export async function rollbackImportBatch(batchId: string, actor: SessionUser) {
           birthDate: snap.birthDate ? new Date(String(snap.birthDate)) : null,
           phone: snap.phone ? String(snap.phone) : null,
           status: (snap.status as MemberStatus) ?? MemberStatus.ACTIVE,
+          generation: snap.generation ? String(snap.generation) : null,
           batchYear: typeof snap.batchYear === 'number' ? snap.batchYear : null,
           updatedBy: actor.id,
         },
@@ -625,6 +649,7 @@ export async function exportMembersFile(
     birthDate: m.birthDate ? m.birthDate.toISOString().slice(0, 10) : '',
     phone: m.phone ?? '',
     status: m.status,
+    generation: m.generation ?? '',
     batchYear: m.batchYear ?? '',
     divisionCode: m.memberships[0]?.division.code ?? '',
     positionTitle: m.memberships[0]?.positionTitle ?? '',

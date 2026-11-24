@@ -15,6 +15,7 @@ import {
   Upload,
   Users,
 } from 'lucide-react';
+import { useBreadcrumb } from '@/components/app-shell';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
 import { FieldGroup, GlassSelect } from '@/components/glass-inputs';
@@ -49,6 +50,7 @@ interface MemberFacets {
 
 export default function MembersPage() {
   const { hasPermission } = useAuth();
+  const { setExtraCrumbs } = useBreadcrumb();
   const router = useRouter();
   const [items, setItems] = useState<Member[]>([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, totalPages: 1 });
@@ -150,6 +152,25 @@ export default function MembersPage() {
 
   const selectedDivName = facets.divisions.find((d) => d.id === divisionId)?.name;
   const isAllSelected = !generation && !divisionId;
+
+  useEffect(() => {
+    const crumbs: Array<{ label: string; onClick?: () => void }> = [];
+    if (generation) {
+      crumbs.push({
+        label: `Generasi ${generation}`,
+        onClick: divisionId
+          ? () => {
+              setDivisionId('');
+              setPage(1);
+            }
+          : undefined,
+      });
+    }
+    if (selectedDivName) {
+      crumbs.push({ label: selectedDivName });
+    }
+    setExtraCrumbs(crumbs);
+  }, [generation, divisionId, selectedDivName, setExtraCrumbs]);
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] flex-col lg:flex-row">
