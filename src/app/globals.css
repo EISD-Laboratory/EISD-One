@@ -13,8 +13,8 @@
     background-color: var(--canvas-bg);
     color: #0f172a;
     font-family:
-      'Plus Jakarta Sans',
-      'Inter',
+      var(--font-poppins),
+      'Poppins',
       ui-sans-serif,
       system-ui,
       -apple-system,
