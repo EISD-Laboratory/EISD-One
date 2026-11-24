@@ -1,0 +1,881 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================================================================
+// EISD One — Lean Modular Core Schema (Opsi B)
+// Konvensi: UUID PK, snake_case tabel/kolom, UTC, soft-delete (deleted_at)
+// ==============================================================================
+
+enum MemberStatus {
+  ACTIVE
+  LEAVE
+  ALUMNI
+}
+
+enum RoleScope {
+  GLOBAL
+  DIVISION
+}
+
+enum ImportDuplicateStrategy {
+  SKIP
+  OVERWRITE
+  MERGE
+}
+
+enum ImportBatchStatus {
+  VALIDATED
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+enum ImportItemOperation {
+  CREATED
+  UPDATED
+  SKIPPED
+  FAILED
+}
+
+enum KpiFrameworkStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum KpiSourceType {
+  AUTO
+  MANUAL
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CalendarCategory {
+  EVENT
+  PRAKTIKUM
+  MEETING
+  COMPETITION
+  BIRTHDAY
+  OTHER
+}
+
+model Division {
+  id          String  @id @default(uuid()) @db.Uuid
+  code        String  @unique @db.VarChar(60)
+  name        String  @db.VarChar(120)
+  description String? @db.Text
+  isCustom    Boolean @default(false) @map("is_custom")
+  isEnabled   Boolean @default(true) @map("is_enabled")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  memberships  Membership[]
+  roles        Role[]
+  customModule CustomModuleSchema?
+
+  @@map("core_divisions")
+}
+
+model Period {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(40)
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  isActive  Boolean  @default(false) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  memberships   Membership[]
+  kpiFrameworks KpiFramework[]
+
+  @@index([isActive])
+  @@map("core_periods")
+}
+
+model Member {
+  id        String       @id @default(uuid()) @db.Uuid
+  nim       String       @unique @db.VarChar(40)
+  fullName  String       @map("full_name") @db.VarChar(160)
+  email     String?      @unique @db.VarChar(180)
+  birthDate DateTime?    @map("birth_date") @db.Date
+  phone     String?      @db.VarChar(40)
+  status    MemberStatus @default(ACTIVE)
+  batchYear Int?         @map("batch_year")
+  notes     String?      @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  memberships Membership[]
+  user        User?
+  kpiScores   KpiScore[]
+  kpiResults  KpiResult[]
+
+  @@index([status])
+  @@index([fullName])
+  @@map("core_members")
+}
+
+model Membership {
+  id            String  @id @default(uuid()) @db.Uuid
+  memberId      String  @map("member_id") @db.Uuid
+  periodId      String  @map("period_id") @db.Uuid
+  divisionId    String  @map("division_id") @db.Uuid
+  positionTitle String  @map("position_title") @db.VarChar(120)
+  isHead        Boolean @default(false) @map("is_head")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  member   Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  period   Period   @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  division Division @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, periodId, divisionId])
+  @@index([periodId, divisionId])
+  @@map("core_memberships")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique @db.VarChar(180)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  googleId     String?   @unique @map("google_id") @db.VarChar(180)
+  fullName     String    @map("full_name") @db.VarChar(160)
+  memberId     String?   @unique @map("member_id") @db.Uuid
+  isActive     Boolean   @default(true) @map("is_active")
+  tokenVersion Int       @default(0) @map("token_version")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(6)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  member    Member?    @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  userRoles UserRole[]
+
+  @@index([isActive])
+  @@map("core_users")
+}
+
+model Role {
+  id          String    @id @default(uuid()) @db.Uuid
+  code        String    @unique @db.VarChar(80)
+  name        String    @db.VarChar(120)
+  description String?   @db.Text
+  scope       RoleScope @default(DIVISION)
+  divisionId  String?   @map("division_id") @db.Uuid
+  isSystem    Boolean   @default(false) @map("is_system")
+  isExtraRole Boolean   @default(false) @map("is_extra_role")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  division        Division?        @relation(fields: [divisionId], references: [id], onDelete: SetNull)
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@map("core_roles")
+}
+
+model Permission {
+  id          String  @id @default(uuid()) @db.Uuid
+  code        String  @unique @db.VarChar(120)
+  module      String  @db.VarChar(60)
+  entity      String  @db.VarChar(60)
+  action      String  @db.VarChar(60)
+  description String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  rolePermissions RolePermission[]
+
+  @@index([module])
+  @@map("core_permissions")
+}
+
+model RolePermission {
+  id           String @id @default(uuid()) @db.Uuid
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("core_role_permissions")
+}
+
+model UserRole {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("core_user_roles")
+}
+
+/// Append-only audit trail.
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  actorEmail String?  @map("actor_email") @db.VarChar(180)
+  action     String   @db.VarChar(80)
+  module     String   @db.VarChar(60)
+  entityType String   @map("entity_type") @db.VarChar(80)
+  entityId   String?  @map("entity_id") @db.VarChar(120)
+  beforeData Json?    @map("before_data")
+  afterData  Json?    @map("after_data")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([module, createdAt])
+  @@index([actorId, createdAt])
+  @@map("core_audit_logs")
+}
+
+model Setting {
+  id          String  @id @default(uuid()) @db.Uuid
+  key         String  @unique @db.VarChar(120)
+  value       Json
+  description String? @db.Text
+  isPublic    Boolean @default(false) @map("is_public")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  @@map("core_settings")
+}
+
+model ImportBatch {
+  id                String                  @id @default(uuid()) @db.Uuid
+  entityType        String                  @map("entity_type") @db.VarChar(80)
+  fileName          String                  @map("file_name") @db.VarChar(255)
+  filePath          String?                 @map("file_path") @db.VarChar(300)
+  duplicateStrategy ImportDuplicateStrategy @default(SKIP) @map("duplicate_strategy")
+  status            ImportBatchStatus       @default(VALIDATED)
+  totalRows         Int                     @default(0) @map("total_rows")
+  successCount      Int                     @default(0) @map("success_count")
+  skippedCount      Int                     @default(0) @map("skipped_count")
+  failedCount       Int                     @default(0) @map("failed_count")
+  columnMapping     Json?                   @map("column_mapping")
+  errorsJson        Json?                   @map("errors_json")
+  rolledBackAt      DateTime?               @map("rolled_back_at") @db.Timestamptz(6)
+  rolledBackBy      String?                 @map("rolled_back_by") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+
+  items ImportBatchItem[]
+
+  @@index([entityType, createdAt])
+  @@map("core_import_batches")
+}
+
+model ImportBatchItem {
+  id               String              @id @default(uuid()) @db.Uuid
+  batchId          String              @map("batch_id") @db.Uuid
+  rowNumber        Int                 @map("row_number")
+  entityId         String?             @map("entity_id") @db.Uuid
+  operation        ImportItemOperation
+  previousSnapshot Json?               @map("previous_snapshot")
+  errorMessage     String?             @map("error_message") @db.Text
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, operation])
+  @@map("core_import_batch_items")
+}
+
+model KpiFramework {
+  id           String             @id @default(uuid()) @db.Uuid
+  name         String             @db.VarChar(160)
+  periodId     String             @map("period_id") @db.Uuid
+  version      Int                @default(1)
+  status       KpiFrameworkStatus @default(DRAFT)
+  clonedFromId String?            @map("cloned_from_id") @db.Uuid
+  description  String?            @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  period     Period         @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  indicators KpiIndicator[]
+  scores     KpiScore[]
+  results    KpiResult[]
+
+  @@index([periodId, status])
+  @@map("core_kpi_frameworks")
+}
+
+model KpiIndicator {
+  id               String        @id @default(uuid()) @db.Uuid
+  frameworkId      String        @map("framework_id") @db.Uuid
+  code             String        @db.VarChar(80)
+  name             String        @db.VarChar(160)
+  description      String?       @db.Text
+  targetDivisionId String?       @map("target_division_id") @db.Uuid
+  weight           Float
+  sourceType       KpiSourceType @map("source_type")
+  unit             String        @default("poin") @db.VarChar(40)
+  minScale         Float         @default(0) @map("min_scale")
+  maxScale         Float         @default(100) @map("max_scale")
+  sourceCode       String?       @map("source_code") @db.VarChar(100)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  framework KpiFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+  scores    KpiScore[]
+
+  @@unique([frameworkId, code])
+  @@map("core_kpi_indicators")
+}
+
+model KpiScore {
+  id              String         @id @default(uuid()) @db.Uuid
+  frameworkId     String         @map("framework_id") @db.Uuid
+  indicatorId     String         @map("indicator_id") @db.Uuid
+  memberId        String         @map("member_id") @db.Uuid
+  year            Int
+  month           Int
+  rawValue        Float          @map("raw_value")
+  normalizedScore Float          @map("normalized_score")
+  sourceType      KpiSourceType  @map("source_type")
+  approvalStatus  ApprovalStatus @default(APPROVED) @map("approval_status")
+  approvedBy      String?        @map("approved_by") @db.Uuid
+  submittedBy     String?        @map("submitted_by") @db.Uuid
+  notes           String?        @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  framework KpiFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+  indicator KpiIndicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+  member    Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([frameworkId, indicatorId, memberId, year, month])
+  @@index([frameworkId, year, month])
+  @@map("core_kpi_scores")
+}
+
+model KpiResult {
+  id            String   @id @default(uuid()) @db.Uuid
+  frameworkId   String   @map("framework_id") @db.Uuid
+  memberId      String   @map("member_id") @db.Uuid
+  year          Int
+  month         Int
+  finalScore    Float    @map("final_score")
+  breakdownJson Json     @map("breakdown_json")
+  isClosed      Boolean  @default(false) @map("is_closed")
+  calculatedAt  DateTime @default(now()) @map("calculated_at") @db.Timestamptz(6)
+
+  framework KpiFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+  member    Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([frameworkId, memberId, year, month])
+  @@index([frameworkId, year, month, finalScore])
+  @@map("core_kpi_results")
+}
+
+model CalendarItem {
+  id                String           @id @default(uuid()) @db.Uuid
+  title             String           @db.VarChar(200)
+  description       String?          @db.Text
+  category          CalendarCategory @default(OTHER)
+  startAt           DateTime         @map("start_at") @db.Timestamptz(6)
+  endAt             DateTime         @map("end_at") @db.Timestamptz(6)
+  allDay            Boolean          @default(false) @map("all_day")
+  location          String?          @db.VarChar(200)
+  divisionId        String?          @map("division_id") @db.Uuid
+  sourceModule      String?          @map("source_module") @db.VarChar(60)
+  sourceEntityId    String?          @map("source_entity_id") @db.VarChar(120)
+  isRecurringYearly Boolean          @default(false) @map("is_recurring_yearly")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([startAt, endAt])
+  @@map("core_calendar_items")
+}
+
+// ==============================================================================
+// TAHAP 2: 4 MODUL DIVISI UTAMA (Core, Event, Praktikum, Enabler)
+// Setiap modul memakai prefix tabel sendiri & rupiah sebagai integer
+// ==============================================================================
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum AssetCondition {
+  GOOD
+  FAIR
+  DAMAGED
+}
+
+enum CoreRecordType {
+  MEETING
+  LETTER
+}
+
+enum EventStatus {
+  IDEA
+  PROPOSAL
+  APPROVED
+  ONGOING
+  COMPLETED
+}
+
+enum EventParticipantRole {
+  COMMITTEE
+  ATTENDEE
+}
+
+enum PraktikumRecordType {
+  ATTENDANCE
+  GRADE
+}
+
+enum PartnerStage {
+  PROSPECT
+  APPROACH
+  NEGOTIATION
+  DEAL
+  ACTIVE
+  COMPLETED
+}
+
+model CoreTransaction {
+  id              String          @id @default(uuid()) @db.Uuid
+  type            TransactionType
+  category        String          @db.VarChar(80)
+  description     String          @db.Text
+  amount          Int
+  transactionDate DateTime        @map("transaction_date") @db.Date
+  sourceModule    String?         @map("source_module") @db.VarChar(60)
+  sourceEntityId  String?         @map("source_entity_id") @db.VarChar(120)
+  status          ApprovalStatus  @default(APPROVED)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([type, transactionDate])
+  @@map("core_transactions")
+}
+
+model CoreAsset {
+  id        String         @id @default(uuid()) @db.Uuid
+  code      String         @unique @db.VarChar(60)
+  name      String         @db.VarChar(160)
+  category  String         @db.VarChar(80)
+  condition AssetCondition @default(GOOD)
+  location  String?        @db.VarChar(160)
+  quantity  Int            @default(1)
+  notes     String?        @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("core_assets")
+}
+
+model CoreRecord {
+  id          String         @id @default(uuid()) @db.Uuid
+  recordType  CoreRecordType @map("record_type")
+  referenceNo String?        @map("reference_no") @db.VarChar(80)
+  title       String         @db.VarChar(200)
+  recordDate  DateTime       @map("record_date") @db.Date
+  summary     String?        @db.Text
+  documentUrl String?        @map("document_url") @db.VarChar(300)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([recordType, recordDate])
+  @@map("core_records")
+}
+
+model EventItem {
+  id            String      @id @default(uuid()) @db.Uuid
+  slug          String      @unique @db.VarChar(120)
+  title         String      @db.VarChar(200)
+  description   String?     @db.Text
+  speaker       String?     @db.VarChar(160)
+  startAt       DateTime    @map("start_at") @db.Timestamptz(6)
+  endAt         DateTime    @map("end_at") @db.Timestamptz(6)
+  location      String?     @db.VarChar(200)
+  status        EventStatus @default(IDEA)
+  budgetAmount  Int         @default(0) @map("budget_amount")
+  actualExpense Int         @default(0) @map("actual_expense")
+  lpjNotes      String?     @map("lpj_notes") @db.Text
+  isPublicOpen  Boolean     @default(false) @map("is_public_open")
+  sponsorNeeded Boolean     @default(false) @map("sponsor_needed")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  participants EventParticipant[]
+
+  @@index([status, startAt])
+  @@map("event_events")
+}
+
+model EventParticipant {
+  id            String               @id @default(uuid()) @db.Uuid
+  eventId       String               @map("event_id") @db.Uuid
+  role          EventParticipantRole @default(ATTENDEE)
+  memberId      String?              @map("member_id") @db.Uuid
+  name          String               @db.VarChar(160)
+  nim           String?              @db.VarChar(40)
+  email         String?              @db.VarChar(180)
+  institution   String?              @db.VarChar(160)
+  position      String?              @db.VarChar(100)
+  attended      Boolean              @default(false)
+  attendedAt    DateTime?            @map("attended_at") @db.Timestamptz(6)
+  certificateNo String?              @unique @map("certificate_no") @db.VarChar(80)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  event EventItem @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, role])
+  @@index([memberId])
+  @@map("event_participants")
+}
+
+model PraktikumCourse {
+  id                 String  @id @default(uuid()) @db.Uuid
+  code               String  @unique @db.VarChar(60)
+  name               String  @db.VarChar(160)
+  semester           String  @db.VarChar(40)
+  schedule           String? @db.VarChar(160)
+  assistantMemberIds Json?   @map("assistant_member_ids")
+  notes              String? @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  records PraktikumRecord[]
+
+  @@map("praktikum_courses")
+}
+
+model PraktikumRecord {
+  id           String              @id @default(uuid()) @db.Uuid
+  courseId     String              @map("course_id") @db.Uuid
+  recordType   PraktikumRecordType @map("record_type")
+  sessionLabel String              @map("session_label") @db.VarChar(100)
+  recordDate   DateTime            @map("record_date") @db.Date
+  memberId     String?             @map("member_id") @db.Uuid
+  studentNim   String?             @map("student_nim") @db.VarChar(40)
+  studentName  String              @map("student_name") @db.VarChar(160)
+  isPresent    Boolean?            @map("is_present")
+  score        Float?
+  notes        String?             @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  course PraktikumCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, recordType, recordDate])
+  @@index([memberId, recordType])
+  @@map("praktikum_records")
+}
+
+model EnablerPartner {
+  id              String       @id @default(uuid()) @db.Uuid
+  name            String       @db.VarChar(160)
+  picName         String?      @map("pic_name") @db.VarChar(120)
+  picContact      String?      @map("pic_contact") @db.VarChar(120)
+  stage           PartnerStage @default(PROSPECT)
+  mouExpiresAt    DateTime?    @map("mou_expires_at") @db.Date
+  eventId         String?      @map("event_id") @db.Uuid
+  obligationsJson Json?        @map("obligations_json")
+  notes           String?      @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([stage])
+  @@map("enabler_partners")
+}
+
+model EnablerRecognition {
+  id             String         @id @default(uuid()) @db.Uuid
+  year           Int
+  month          Int
+  memberId       String         @map("member_id") @db.Uuid
+  memberName     String         @map("member_name") @db.VarChar(160)
+  title          String         @default("Staff of the Month") @db.VarChar(120)
+  kpiScore       Float          @default(0) @map("kpi_score")
+  isOverride     Boolean        @default(false) @map("is_override")
+  overrideReason String?        @map("override_reason") @db.Text
+  rewardAmount   Int            @default(0) @map("reward_amount")
+  status         ApprovalStatus @default(PENDING)
+  approvedBy     String?        @map("approved_by") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([year, month])
+  @@map("enabler_recognitions")
+}
+
+// ==============================================================================
+// TAHAP 3: 4 MODUL SISA (Media, Competition, Research, Study Group)
+//          + CUSTOM MODULE BUILDER (Odoo Mini untuk Administrator)
+// ==============================================================================
+
+enum MediaRequestStatus {
+  REQUESTED
+  IN_PROGRESS
+  REVIEW
+  PUBLISHED
+}
+
+enum CompetitionStatus {
+  REGISTERED
+  FINALIST
+  WINNER
+  PARTICIPANT
+}
+
+enum ResearchType {
+  RESEARCH
+  PUBLICATION
+  COMMUNITY_SERVICE
+}
+
+enum ResearchStatus {
+  PROPOSAL
+  ONGOING
+  SUBMITTED
+  PUBLISHED
+  COMPLETED
+}
+
+model MediaRequest {
+  id                String             @id @default(uuid()) @db.Uuid
+  title             String             @db.VarChar(200)
+  requesterDivision String?            @map("requester_division") @db.VarChar(80)
+  channel           String             @default("Instagram") @db.VarChar(80)
+  picMemberId       String?            @map("pic_member_id") @db.Uuid
+  picName           String?            @map("pic_name") @db.VarChar(160)
+  dueDate           DateTime?          @map("due_date") @db.Date
+  publishAt         DateTime?          @map("publish_at") @db.Timestamptz(6)
+  status            MediaRequestStatus @default(REQUESTED)
+  brief             String?            @db.Text
+  assetUrl          String?            @map("asset_url") @db.VarChar(300)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([status, dueDate])
+  @@index([picMemberId])
+  @@map("media_requests")
+}
+
+model CompetitionEntry {
+  id              String            @id @default(uuid()) @db.Uuid
+  competitionName String            @map("competition_name") @db.VarChar(200)
+  organizer       String?           @db.VarChar(160)
+  level           String            @default("Nasional") @db.VarChar(60)
+  teamName        String            @map("team_name") @db.VarChar(140)
+  memberIdsJson   Json?             @map("member_ids_json")
+  memberNames     String?           @map("member_names") @db.Text
+  eventDate       DateTime          @map("event_date") @db.Date
+  status          CompetitionStatus @default(REGISTERED)
+  achievement     String?           @db.VarChar(200)
+  registrationFee Int               @default(0) @map("registration_fee")
+  recordedToCash  Boolean           @default(false) @map("recorded_to_cash")
+  notes           String?           @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([status, eventDate])
+  @@map("competition_entries")
+}
+
+model ResearchProject {
+  id             String         @id @default(uuid()) @db.Uuid
+  title          String         @db.VarChar(240)
+  type           ResearchType   @default(RESEARCH)
+  year           Int
+  leadMemberId   String?        @map("lead_member_id") @db.Uuid
+  leadName       String?        @map("lead_name") @db.VarChar(160)
+  teamSummary    String?        @map("team_summary") @db.Text
+  status         ResearchStatus @default(PROPOSAL)
+  venueOrPartner String?        @map("venue_or_partner") @db.VarChar(200)
+  documentUrl    String?        @map("document_url") @db.VarChar(300)
+  notes          String?        @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([type, year])
+  @@index([leadMemberId])
+  @@map("research_projects")
+}
+
+model StudyGroupClass {
+  id              String  @id @default(uuid()) @db.Uuid
+  code            String  @unique @db.VarChar(60)
+  name            String  @db.VarChar(160)
+  topic           String  @db.VarChar(160)
+  mentorMemberId  String? @map("mentor_member_id") @db.Uuid
+  mentorName      String? @map("mentor_name") @db.VarChar(160)
+  schedule        String? @db.VarChar(160)
+  maxParticipants Int     @default(30) @map("max_participants")
+  notes           String? @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  sessions StudyGroupSession[]
+
+  @@index([mentorMemberId])
+  @@map("study_group_classes")
+}
+
+model StudyGroupSession {
+  id            String   @id @default(uuid()) @db.Uuid
+  groupId       String   @map("group_id") @db.Uuid
+  sessionNo     Int      @map("session_no")
+  title         String   @db.VarChar(200)
+  sessionDate   DateTime @map("session_date") @db.Timestamptz(6)
+  materialUrl   String?  @map("material_url") @db.VarChar(300)
+  attendeeCount Int      @default(0) @map("attendee_count")
+  attendeesText String?  @map("attendees_text") @db.Text
+  notes         String?  @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  group StudyGroupClass @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, sessionDate])
+  @@map("study_group_sessions")
+}
+
+model CustomModuleSchema {
+  id          String  @id @default(uuid()) @db.Uuid
+  divisionId  String  @unique @map("division_id") @db.Uuid
+  code        String  @unique @db.VarChar(60)
+  name        String  @db.VarChar(120)
+  description String? @db.Text
+  fieldsJson  Json    @map("fields_json")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  division Division             @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+  records  CustomModuleRecord[]
+
+  @@map("core_custom_modules")
+}
+
+model CustomModuleRecord {
+  id       String @id @default(uuid()) @db.Uuid
+  moduleId String @map("module_id") @db.Uuid
+  title    String @db.VarChar(200)
+  dataJson Json   @map("data_json")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  module CustomModuleSchema @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId, createdAt])
+  @@map("core_custom_records")
+}
