@@ -11,6 +11,12 @@ import { recordAudit, type AuditActor } from '@/core/audit';
 import { prisma } from '@/core/db';
 import { generateCsvBuffer, sanitizeFormulaCell, type SheetColumn } from '@/core/excel';
 import { HttpError } from '@/core/http';
+import {
+  formatAutoLetterNumber,
+  getTemplateMeta,
+  type LetterPayload,
+  type LetterTemplateCode,
+} from './letter-templates';
 
 export const DEFAULT_MONTHLY_KAS_AMOUNT = 15000;
 
@@ -314,6 +320,25 @@ export async function getCoreOverview(filter: CoreFinanceFilter = {}) {
   const annualTotalSlots = totalActiveMembers * 12;
   const annualTarget = annualTotalSlots * monthlyFee;
 
+  // Hitung nomor urut surat otomatis berikutnya per tahun
+  const maxSeqByYear: Record<number, number> = {};
+  for (const rec of records) {
+    if (rec.recordType === CoreRecordType.LETTER && rec.sequenceYear && rec.sequenceNo) {
+      maxSeqByYear[rec.sequenceYear] = Math.max(
+        maxSeqByYear[rec.sequenceYear] ?? 0,
+        rec.sequenceNo,
+      );
+    }
+  }
+  const currentYearNum = now.getUTCFullYear();
+  const nextLetterSeqByYear: Record<number, number> = {
+    [currentYearNum]: (maxSeqByYear[currentYearNum] ?? 0) + 1,
+    [analyticsYear]: (maxSeqByYear[analyticsYear] ?? 0) + 1,
+  };
+  for (const [yrKey, maxSeq] of Object.entries(maxSeqByYear)) {
+    nextLetterSeqByYear[Number(yrKey)] = maxSeq + 1;
+  }
+
   return {
     summary: {
       totalIncome,
@@ -334,6 +359,7 @@ export async function getCoreOverview(filter: CoreFinanceFilter = {}) {
       categories: Array.from(categorySet).sort((a, b) => a.localeCompare(b)),
       sourceModules: Array.from(sourceModuleSet).sort((a, b) => a.localeCompare(b)),
       availableYears: Array.from(yearSet).sort((a, b) => b - a),
+      nextLetterSeqByYear,
     },
     analytics: {
       year: analyticsYear,
@@ -752,6 +778,133 @@ export async function createCoreRecord(
     afterData: created,
   });
   return created;
+}
+
+export async function createGeneratedLetter(payload: LetterPayload, actor: AuditActor) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(payload.letterDate.trim());
+  const seqYear = m ? Number(m[1]) : new Date().getUTCFullYear();
+  const meta = getTemplateMeta(payload.templateCode);
+
+  const created = await prisma.$transaction(async (tx) => {
+    const agg = await tx.coreRecord.aggregate({
+      where: {
+        recordType: CoreRecordType.LETTER,
+        sequenceYear: seqYear,
+        deletedAt: null,
+      },
+      _max: { sequenceNo: true },
+    });
+    const nextSeq = (agg._max.sequenceNo ?? 0) + 1;
+    const referenceNo = formatAutoLetterNumber(nextSeq, payload.templateCode, payload.letterDate);
+
+    const summaryParts = [
+      `Template: ${meta.name}`,
+      payload.recipientName.trim() ? `Tujuan: ${payload.recipientName.trim()}` : null,
+      payload.memberName.trim() ? `Anggota: ${payload.memberName.trim()}` : null,
+      payload.purpose.trim() ? `Keperluan: ${payload.purpose.trim()}` : null,
+    ].filter(Boolean);
+
+    return tx.coreRecord.create({
+      data: {
+        recordType: CoreRecordType.LETTER,
+        referenceNo,
+        templateCode: payload.templateCode,
+        sequenceYear: seqYear,
+        sequenceNo: nextSeq,
+        title: payload.subject.trim() || meta.defaultSubject,
+        recordDate: new Date(payload.letterDate),
+        summary: summaryParts.join(' · '),
+        letterDataJson: payload as unknown as Prisma.InputJsonValue,
+        createdBy: actor.id,
+        updatedBy: actor.id,
+      },
+    });
+  });
+
+  await recordAudit({
+    actor,
+    action: 'core.letter.generated',
+    module: 'core',
+    entityType: 'CoreRecord',
+    entityId: created.id,
+    afterData: {
+      referenceNo: created.referenceNo,
+      templateCode: created.templateCode,
+      title: created.title,
+    },
+  });
+
+  return created;
+}
+
+export async function deleteCoreRecord(id: string, actor: AuditActor) {
+  const existing = await prisma.coreRecord.findFirst({
+    where: { id, deletedAt: null },
+  });
+  if (!existing) throw new HttpError(404, 'Arsip administrasi tidak ditemukan.');
+
+  await prisma.coreRecord.update({
+    where: { id },
+    data: { deletedAt: new Date(), updatedBy: actor.id },
+  });
+
+  await recordAudit({
+    actor,
+    action: 'core.record.deleted',
+    module: 'core',
+    entityType: 'CoreRecord',
+    entityId: id,
+    beforeData: { title: existing.title, referenceNo: existing.referenceNo },
+  });
+
+  return { deleted: true, id };
+}
+
+export async function getCoreLetterForPdf(id: string) {
+  const record = await prisma.coreRecord.findFirst({
+    where: { id, recordType: CoreRecordType.LETTER, deletedAt: null },
+  });
+  if (!record) throw new HttpError(404, 'Surat resmi tidak ditemukan.');
+  if (!record.letterDataJson || typeof record.letterDataJson !== 'object') {
+    throw new HttpError(400, 'Arsip surat ini tidak memiliki data template cetak.');
+  }
+
+  const raw = record.letterDataJson as Record<string, unknown>;
+  const templateCode = (
+    typeof raw.templateCode === 'string' ? raw.templateCode : record.templateCode || 'UMM'
+  ) as LetterTemplateCode;
+
+  const payload: LetterPayload = {
+    templateCode,
+    letterDate: String(raw.letterDate || record.recordDate.toISOString().slice(0, 10)),
+    city: String(raw.city || 'Bandung'),
+    attachment: String(raw.attachment || '-'),
+    subject: String(raw.subject || record.title),
+    recipientName: String(raw.recipientName || ''),
+    recipientOrg: String(raw.recipientOrg || ''),
+    recipientPlace: String(raw.recipientPlace || 'Tempat'),
+    purpose: String(raw.purpose || ''),
+    eventDate: String(raw.eventDate || ''),
+    eventTime: String(raw.eventTime || ''),
+    eventLocation: String(raw.eventLocation || ''),
+    itemDetails: String(raw.itemDetails || ''),
+    memberName: String(raw.memberName || ''),
+    memberNim: String(raw.memberNim || ''),
+    memberDivision: String(raw.memberDivision || ''),
+    periodName: String(raw.periodName || '2026/2027'),
+    customBody: String(raw.customBody || ''),
+    chairName: String(raw.chairName || 'Alya Pratama'),
+    chairId: String(raw.chairId || ''),
+    secretaryName: String(raw.secretaryName || 'Bima Mahendra'),
+    secretaryId: String(raw.secretaryId || ''),
+  };
+
+  return {
+    id: record.id,
+    referenceNo: record.referenceNo || '001/UMM/EISD/I/2026',
+    title: record.title,
+    payload,
+  };
 }
 
 const TX_COLUMNS: SheetColumn[] = [

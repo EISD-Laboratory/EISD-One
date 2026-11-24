@@ -556,13 +556,17 @@ model CoreAsset {
 }
 
 model CoreRecord {
-  id          String         @id @default(uuid()) @db.Uuid
-  recordType  CoreRecordType @map("record_type")
-  referenceNo String?        @map("reference_no") @db.VarChar(80)
-  title       String         @db.VarChar(200)
-  recordDate  DateTime       @map("record_date") @db.Date
-  summary     String?        @db.Text
-  documentUrl String?        @map("document_url") @db.VarChar(300)
+  id             String         @id @default(uuid()) @db.Uuid
+  recordType     CoreRecordType @map("record_type")
+  referenceNo    String?        @map("reference_no") @db.VarChar(80)
+  templateCode   String?        @map("template_code") @db.VarChar(30)
+  sequenceYear   Int?           @map("sequence_year")
+  sequenceNo     Int?           @map("sequence_no")
+  title          String         @db.VarChar(200)
+  recordDate     DateTime       @map("record_date") @db.Date
+  summary        String?        @db.Text
+  letterDataJson Json?          @map("letter_data_json")
+  documentUrl    String?        @map("document_url") @db.VarChar(300)
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -571,6 +575,7 @@ model CoreRecord {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@index([recordType, recordDate])
+  @@index([sequenceYear, sequenceNo])
   @@map("core_records")
 }
 

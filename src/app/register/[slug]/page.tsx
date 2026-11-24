@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { useParams } from 'next/navigation';
-import { CalendarDays, Sparkles } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { apiFetch } from '@/components/client-api';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
@@ -51,7 +51,7 @@ export default function PublicEventRegisterPage() {
         <CardHeader className="aurora-card-blend">
           <div className="flex items-center justify-between">
             <Badge variant="purple" className="gap-1.5">
-              <Sparkles className="h-3 w-3 text-emerald-600" />
+              <img src="/images/eisd.png" alt="Logo EISD" className="h-3.5 w-3.5 object-contain" />
               Pendaftaran Kegiatan EISD
             </Badge>
           </div>

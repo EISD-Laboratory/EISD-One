@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, CalendarDays, LogOut, Sparkles } from 'lucide-react';
+import { Bell, CalendarDays, LogOut } from 'lucide-react';
 import { AppModuleIcon, type AppIconKey } from '@/components/app-icons';
 import { useAuth } from '@/components/auth-context';
 import { apiFetch } from '@/components/client-api';
@@ -246,8 +246,8 @@ export default function AppsLauncherPage() {
       {/* Slim Glass Top Bar ala Odoo */}
       <header className="glass-topbar sticky top-0 z-20 flex h-14 items-center justify-between px-5 sm:px-8">
         <div className="flex items-center gap-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-sm">
-            <Sparkles className="h-4 w-4" />
+          <span className="glass-tile flex h-9 w-9 items-center justify-center rounded-xl p-1.5 shadow-sm">
+            <img src="/images/eisd.png" alt="Logo EISD" className="h-full w-full object-contain" />
           </span>
           <span className="text-sm font-bold tracking-tight text-slate-900">
             EISD <span className="text-brand-gradient">One</span>

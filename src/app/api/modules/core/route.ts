@@ -7,7 +7,9 @@ import {
   bulkMarkKasPaid,
   createAsset,
   createCoreRecord,
+  createGeneratedLetter,
   createManualTransaction,
+  deleteCoreRecord,
   deleteTransaction,
   exportCoreTransactions,
   getCoreOverview,
@@ -147,9 +149,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(await createCoreRecord(data, user), { status: 201 });
     }
 
+    if (kind === 'generated_letter') {
+      const user = await requirePermission(['core.record.manage']);
+      const data = z
+        .object({
+          templateCode: z.enum(['UND', 'PMH', 'PJM', 'SKT', 'STG', 'UMM']),
+          letterDate: z.string().min(8),
+          city: z.string().default('Bandung'),
+          attachment: z.string().default('-'),
+          subject: z.string().min(2),
+          recipientName: z.string().default(''),
+          recipientOrg: z.string().default(''),
+          recipientPlace: z.string().default('Tempat'),
+          purpose: z.string().default(''),
+          eventDate: z.string().default(''),
+          eventTime: z.string().default(''),
+          eventLocation: z.string().default(''),
+          itemDetails: z.string().default(''),
+          memberName: z.string().default(''),
+          memberNim: z.string().default(''),
+          memberDivision: z.string().default(''),
+          periodName: z.string().default('2026/2027'),
+          customBody: z.string().default(''),
+          chairName: z.string().default('Alya Pratama'),
+          chairId: z.string().default(''),
+          secretaryName: z.string().default('Bima Mahendra'),
+          secretaryId: z.string().default(''),
+        })
+        .parse(body);
+      return NextResponse.json(await createGeneratedLetter(data, user), { status: 201 });
+    }
+
     throw new HttpError(
       400,
-      'Field kind tidak dikenal (gunakan transaction/kas_toggle/kas_bulk_pay/asset/record).',
+      'Field kind tidak dikenal (gunakan transaction/kas_toggle/kas_bulk_pay/asset/record/generated_letter).',
     );
   } catch (error) {
     return handleRouteError(error);
@@ -158,9 +191,14 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const user = await requirePermission(['core.finance.manage']);
     const id = req.nextUrl.searchParams.get('id');
+    const kind = req.nextUrl.searchParams.get('kind');
     if (!id) throw new HttpError(400, 'Parameter id wajib diisi.');
+    if (kind === 'record') {
+      const user = await requirePermission(['core.record.manage']);
+      return NextResponse.json(await deleteCoreRecord(id, user));
+    }
+    const user = await requirePermission(['core.finance.manage']);
     return NextResponse.json(await deleteTransaction(id, user));
   } catch (error) {
     return handleRouteError(error);

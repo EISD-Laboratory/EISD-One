@@ -13,6 +13,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'EISD One — Platform Manajemen Internal Lab EISD',
   description: 'Odoo-mini modular platform untuk laboratorium EISD.',
+  icons: {
+    icon: '/images/eisd.png',
+    shortcut: '/images/eisd.png',
+    apple: '/images/eisd.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

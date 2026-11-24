@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
 import { apiFetch } from '@/components/client-api';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
@@ -39,10 +38,16 @@ export default function LoginPage() {
         <CardHeader className="aurora-card-purple pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-sm">
-                <Sparkles className="h-4 w-4" />
+              <span className="glass-tile flex h-10 w-10 items-center justify-center rounded-xl p-1.5 shadow-sm">
+                <img
+                  src="/images/eisd.png"
+                  alt="Logo EISD"
+                  className="h-full w-full object-contain"
+                />
               </span>
-              <CardTitle className="text-xl font-bold">EISD One</CardTitle>
+              <CardTitle className="text-xl font-bold">
+                EISD <span className="text-brand-gradient">One</span>
+              </CardTitle>
             </div>
             <Badge variant="purple">Internal Lab</Badge>
           </div>

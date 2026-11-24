@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   CalendarCategory,
   EventParticipantRole,
@@ -35,7 +37,17 @@ export function generateCertificatePdfBuffer(input: {
     doc.on('error', reject);
 
     doc.rect(28, 28, doc.page.width - 56, doc.page.height - 56).stroke('#0f172a');
-    doc.moveDown(1.5);
+    const logoPath = path.join(process.cwd(), 'public', 'images', 'eisd.png');
+    if (fs.existsSync(logoPath)) {
+      doc.image(logoPath, doc.page.width / 2 - 24, 48, {
+        fit: [48, 48],
+        align: 'center',
+        valign: 'center',
+      });
+      doc.y = 104;
+    } else {
+      doc.moveDown(1.5);
+    }
     doc
       .fontSize(14)
       .font('Helvetica-Bold')

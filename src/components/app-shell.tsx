@@ -157,9 +157,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
             <Link
               href="/apps"
-              className="hidden shrink-0 text-sm font-bold tracking-tight text-slate-900 hover:text-violet-700 sm:inline"
+              className="hidden shrink-0 items-center gap-2 text-sm font-bold tracking-tight text-slate-900 hover:text-violet-700 sm:inline-flex"
             >
-              EISD <span className="text-brand-gradient">One</span>
+              <img src="/images/eisd.png" alt="Logo EISD" className="h-6 w-6 object-contain" />
+              <span>
+                EISD <span className="text-brand-gradient">One</span>
+              </span>
             </Link>
 
             {allCrumbs.map((crumb, idx) => {

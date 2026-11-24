@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HttpError } from '@/core/http';
+import { generateOfficialLetterPdfBuffer } from '@/modules/core/letter-pdf';
+import { formatAutoLetterNumber, getDefaultLetterPayload } from '@/modules/core/letter-templates';
 import { validateStaffOfTheMonthSelection } from '@/modules/enabler/enabler.service';
 import { generateCertificatePdfBuffer, slugifyEventTitle } from '@/modules/event/event.service';
 
@@ -45,5 +47,23 @@ describe('Tahap 2 — Event (tanpa QR) & Enabler Business Rules', () => {
         overrideReason: 'Kontribusi luar biasa saat menjadi koordinator kuliah umum.',
       }),
     ).toEqual({ isOverride: true });
+  });
+
+  it('menghasilkan nomor surat otomatis berformat baku dan PDF A4 resmi EISD', async () => {
+    const refNo = formatAutoLetterNumber(7, 'UND', '2026-11-24');
+    expect(refNo).toBe('007/UND/EISD/XI/2026');
+
+    const payload = {
+      ...getDefaultLetterPayload('UND', '2026-11-24'),
+      recipientName: 'Dr. Budi Santoso',
+      recipientOrg: 'Fakultas Rekayasa Industri',
+      purpose: 'Kuliah Umum Enterprise Architecture 2026',
+      eventDate: 'Sabtu, 5 Desember 2026',
+      eventTime: '09.00 - 12.00 WIB',
+      eventLocation: 'Auditorium Gedung A',
+    };
+    const pdf = await generateOfficialLetterPdfBuffer(payload, refNo);
+    expect(pdf.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+    expect(pdf.length).toBeGreaterThan(800);
   });
 });
