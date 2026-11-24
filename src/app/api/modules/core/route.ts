@@ -4,19 +4,58 @@ import { z } from 'zod';
 import { requirePermission } from '@/core/auth';
 import { handleRouteError, HttpError } from '@/core/http';
 import {
+  bulkMarkKasPaid,
   createAsset,
   createCoreRecord,
   createManualTransaction,
+  deleteTransaction,
   exportCoreTransactions,
   getCoreOverview,
+  toggleKasPayment,
+  type CoreFinanceFilter,
 } from '@/modules/core/core.service';
+
+function parseFinanceFilter(req: NextRequest): CoreFinanceFilter {
+  const sp = req.nextUrl.searchParams;
+  const rawType = sp.get('type');
+  const type: CoreFinanceFilter['type'] =
+    rawType === 'INCOME' || rawType === 'EXPENSE' ? rawType : 'ALL';
+
+  const rawYear = sp.get('year');
+  const year = rawYear && rawYear !== 'ALL' ? Number(rawYear) : null;
+
+  const rawMonth = sp.get('month');
+  const month = rawMonth && rawMonth !== 'ALL' ? Number(rawMonth) : null;
+
+  const rawAnalyticsYear = sp.get('analyticsYear');
+  const analyticsYear =
+    rawAnalyticsYear && Number.isFinite(Number(rawAnalyticsYear))
+      ? Number(rawAnalyticsYear)
+      : year && Number.isFinite(year)
+        ? year
+        : new Date().getUTCFullYear();
+
+  return {
+    type,
+    year: year && Number.isFinite(year) ? year : null,
+    month: month && Number.isFinite(month) ? month : null,
+    category: sp.get('category') || null,
+    sourceModule: sp.get('sourceModule') || null,
+    search: sp.get('search') || null,
+    analyticsYear,
+  };
+}
 
 export async function GET(req: NextRequest) {
   try {
     const user = await requirePermission(['core.finance.read']);
+    const filter = parseFinanceFilter(req);
     const format = req.nextUrl.searchParams.get('export');
+    const rawScope = req.nextUrl.searchParams.get('scope');
+    const scope = rawScope === 'transactions' || rawScope === 'kas' ? rawScope : 'full';
+
     if (format === 'xlsx' || format === 'csv') {
-      const file = await exportCoreTransactions(format, user);
+      const file = await exportCoreTransactions(format, user, filter, scope);
       return new NextResponse(new Uint8Array(file.buffer), {
         headers: {
           'Content-Type': file.contentType,
@@ -24,7 +63,7 @@ export async function GET(req: NextRequest) {
         },
       });
     }
-    return NextResponse.json(await getCoreOverview());
+    return NextResponse.json(await getCoreOverview(filter));
   } catch (error) {
     return handleRouteError(error);
   }
@@ -47,6 +86,34 @@ export async function POST(req: NextRequest) {
         })
         .parse(body);
       return NextResponse.json(await createManualTransaction(data, user), { status: 201 });
+    }
+
+    if (kind === 'kas_toggle') {
+      const user = await requirePermission(['core.finance.manage']);
+      const data = z
+        .object({
+          memberId: z.string().uuid(),
+          year: z.coerce.number().int().min(2020).max(2100),
+          month: z.coerce.number().int().min(1).max(12),
+          paid: z.boolean(),
+          amount: z.coerce.number().int().positive().optional(),
+          paidAt: z.string().optional(),
+          notes: z.string().optional(),
+        })
+        .parse(body);
+      return NextResponse.json(await toggleKasPayment(data, user));
+    }
+
+    if (kind === 'kas_bulk_pay') {
+      const user = await requirePermission(['core.finance.manage']);
+      const data = z
+        .object({
+          year: z.coerce.number().int().min(2020).max(2100),
+          month: z.coerce.number().int().min(1).max(12),
+          memberIds: z.array(z.string().uuid()).optional(),
+        })
+        .parse(body);
+      return NextResponse.json(await bulkMarkKasPaid(data, user));
     }
 
     if (kind === 'asset') {
@@ -80,7 +147,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(await createCoreRecord(data, user), { status: 201 });
     }
 
-    throw new HttpError(400, 'Field kind tidak dikenal (gunakan transaction/asset/record).');
+    throw new HttpError(
+      400,
+      'Field kind tidak dikenal (gunakan transaction/kas_toggle/kas_bulk_pay/asset/record).',
+    );
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await requirePermission(['core.finance.manage']);
+    const id = req.nextUrl.searchParams.get('id');
+    if (!id) throw new HttpError(400, 'Parameter id wajib diisi.');
+    return NextResponse.json(await deleteTransaction(id, user));
   } catch (error) {
     return handleRouteError(error);
   }

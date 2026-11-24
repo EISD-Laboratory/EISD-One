@@ -36,6 +36,12 @@ const DEFAULT_SETTINGS = [
       'Aktifkan role tambahan (Wakadiv, Staf, Anggota) di luar 10 akun default + Administrator.',
     isPublic: false,
   },
+  {
+    key: 'finance.monthly_kas_amount',
+    value: 15000,
+    description: 'Nominal iuran kas bulanan per anggota aktif (Rupiah)',
+    isPublic: false,
+  },
 ];
 
 const DIVISIONS = [
@@ -851,18 +857,150 @@ async function main() {
     }
 
     // Demo data Tahap 2 (fiktif)
-    const existingTx = await prisma.coreTransaction.findFirst();
-    if (!existingTx) {
-      await prisma.coreTransaction.create({
-        data: {
-          type: 'INCOME',
-          category: 'Kas Awal',
-          description: 'Saldo kas awal kepengurusan 2026/2027 (contoh fiktif)',
-          amount: 5000000,
-          transactionDate: new Date('2026-08-01T00:00:00.000Z'),
-          sourceModule: 'core',
+    const demoTxSeeds = [
+      {
+        sourceEntityId: 'seed-tx-2026-08-kas-awal',
+        type: 'INCOME' as const,
+        category: 'Kas Awal',
+        description: 'Saldo kas awal kepengurusan 2026/2027 (contoh fiktif)',
+        amount: 5000000,
+        transactionDate: new Date('2026-08-01T00:00:00.000Z'),
+        sourceModule: 'core',
+      },
+      {
+        sourceEntityId: 'seed-tx-2026-08-atk',
+        type: 'EXPENSE' as const,
+        category: 'Operasional',
+        description: 'Pembelian ATK, spidol papan tulis, dan perlengkapan ruang lab',
+        amount: 325000,
+        transactionDate: new Date('2026-08-14T00:00:00.000Z'),
+        sourceModule: 'core',
+      },
+      {
+        sourceEntityId: 'seed-tx-2026-09-sponsor',
+        type: 'INCOME' as const,
+        category: 'Sponsorship',
+        description: 'Dukungan dana kemitraan PT Teknologi Nusantara (Termin 1)',
+        amount: 1500000,
+        transactionDate: new Date('2026-09-10T00:00:00.000Z'),
+        sourceModule: 'enabler',
+      },
+      {
+        sourceEntityId: 'seed-tx-2026-09-rapat',
+        type: 'EXPENSE' as const,
+        category: 'Konsumsi',
+        description: 'Konsumsi rapat kerja awal periode pengurus EISD',
+        amount: 420000,
+        transactionDate: new Date('2026-09-18T00:00:00.000Z'),
+        sourceModule: 'core',
+      },
+      {
+        sourceEntityId: 'seed-tx-2026-10-event-dp',
+        type: 'EXPENSE' as const,
+        category: 'Event',
+        description: 'Uang muka perlengkapan & publikasi Kuliah Umum Enterprise',
+        amount: 650000,
+        transactionDate: new Date('2026-10-12T00:00:00.000Z'),
+        sourceModule: 'event',
+      },
+      {
+        sourceEntityId: 'seed-tx-2026-10-lomba',
+        type: 'EXPENSE' as const,
+        category: 'Competition',
+        description: 'Subsidi pendaftaran tim EISD Garuda untuk GEMASTIK 2026',
+        amount: 200000,
+        transactionDate: new Date('2026-10-22T00:00:00.000Z'),
+        sourceModule: 'competition',
+      },
+      {
+        sourceEntityId: 'seed-tx-2026-11-workshop',
+        type: 'INCOME' as const,
+        category: 'Workshop & Pelatihan',
+        description: 'Kontribusi peserta eksternal Study Group Fullstack',
+        amount: 850000,
+        transactionDate: new Date('2026-11-08T00:00:00.000Z'),
+        sourceModule: 'core',
+      },
+      {
+        sourceEntityId: 'seed-tx-2026-11-peralatan',
+        type: 'EXPENSE' as const,
+        category: 'Perlengkapan Lab',
+        description: 'Pembelian kabel HDMI, adaptor proyektor, dan stop kontak lab',
+        amount: 280000,
+        transactionDate: new Date('2026-11-16T00:00:00.000Z'),
+        sourceModule: 'core',
+      },
+    ];
+
+    for (const seedTx of demoTxSeeds) {
+      const exists = await prisma.coreTransaction.findFirst({
+        where: {
+          OR: [
+            { sourceEntityId: seedTx.sourceEntityId },
+            { description: seedTx.description, amount: seedTx.amount },
+          ],
         },
       });
+      if (!exists) {
+        await prisma.coreTransaction.create({ data: seedTx });
+      }
+    }
+
+    // Seed demo pembayaran Kas Bulanan (Rp 15.000/anggota) untuk Agt–Nov 2026
+    const existingKasCount = await prisma.coreKasPayment.count();
+    if (existingKasCount === 0) {
+      const seededMembers = await prisma.member.findMany({
+        where: { status: MemberStatus.ACTIVE, deletedAt: null },
+        orderBy: { nim: 'asc' },
+      });
+      const monthNames = [
+        '',
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
+      ];
+      const kasSchedule: Array<{ month: number; paidCount: number; day: number }> = [
+        { month: 8, paidCount: 9, day: 10 },
+        { month: 9, paidCount: 8, day: 12 },
+        { month: 10, paidCount: 7, day: 14 },
+        { month: 11, paidCount: 6, day: 18 },
+      ];
+      for (const sched of kasSchedule) {
+        const subset = seededMembers.slice(0, sched.paidCount);
+        for (const m of subset) {
+          const paidDate = new Date(Date.UTC(2026, sched.month - 1, sched.day));
+          const tx = await prisma.coreTransaction.create({
+            data: {
+              type: 'INCOME',
+              category: 'Kas Bulanan',
+              description: `Kas Bulanan ${monthNames[sched.month]} 2026 — ${m.fullName} (${m.nim})`,
+              amount: 15000,
+              transactionDate: paidDate,
+              sourceModule: 'kas',
+              sourceEntityId: `${m.id}:2026-${sched.month}`,
+            },
+          });
+          await prisma.coreKasPayment.create({
+            data: {
+              memberId: m.id,
+              year: 2026,
+              month: sched.month,
+              amount: 15000,
+              paidAt: paidDate,
+              transactionId: tx.id,
+            },
+          });
+        }
+      }
     }
 
     await prisma.coreAsset.upsert({

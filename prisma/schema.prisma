@@ -132,6 +132,7 @@ model Member {
   user        User?
   kpiScores   KpiScore[]
   kpiResults  KpiResult[]
+  kasPayments CoreKasPayment[]
 
   @@index([status])
   @@index([generation])
@@ -511,6 +512,28 @@ model CoreTransaction {
 
   @@index([type, transactionDate])
   @@map("core_transactions")
+}
+
+model CoreKasPayment {
+  id            String   @id @default(uuid()) @db.Uuid
+  memberId      String   @map("member_id") @db.Uuid
+  year          Int
+  month         Int
+  amount        Int      @default(15000)
+  paidAt        DateTime @default(now()) @map("paid_at") @db.Timestamptz(6)
+  transactionId String?  @map("transaction_id") @db.Uuid
+  notes         String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedBy String?  @map("updated_by") @db.Uuid
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, year, month])
+  @@index([year, month])
+  @@map("core_kas_payments")
 }
 
 model CoreAsset {
