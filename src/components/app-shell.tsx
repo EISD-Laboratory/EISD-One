@@ -129,7 +129,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
   if (!user) return null;
 
-  const isFullBleedPage = pathname === '/members';
+  const isFullBleedPage = pathname === '/members' || pathname === '/calendar';
 
   return (
     <BreadcrumbContext.Provider value={breadcrumbCtxValue}>
